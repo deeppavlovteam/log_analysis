@@ -1,4 +1,6 @@
 *
 !requirements.txt
-!log_info.py
 !log_info.ipynb
+!log_info.py
+!log_tools.py
+!log_transformers.py

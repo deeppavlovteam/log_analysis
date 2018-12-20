@@ -22,7 +22,7 @@ DEFAULT_CONFIG = {
     'log_dataframe_fields': ['ip_from', 'domain', '_1', 'timestamp', 'request',
                              'response_code', 'time', 'ref', 'app', '_2', 'internal_request', 'resource'],
     'filter_match': [],
-    'filter_not_match': [],
+    'filter_not_match': [{'column': 'request', 'regexp': r'^"GET /.+md5 HTTP.+"$'}],
     'filter_in': [{'column': 'domain', 'values': ['files.deeppavlov.ai']}],
     'filter_not_in': [],
     'transform': [{'column': 'timestamp', 'transformer': convert_to_datetime}]
