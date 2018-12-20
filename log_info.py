@@ -2,11 +2,12 @@ import re
 import gzip
 import hashlib
 from pathlib import Path
-from datetime import datetime
-from typing import Optional
-from collections import defaultdict
 
 import pandas as pd
+
+from log_tools import process_df
+from log_transformers import convert_to_datetime
+
 
 DEFAULT_CONFIG = {
     'log_dir': '../nginx_t',
@@ -22,40 +23,12 @@ DEFAULT_CONFIG = {
                              'response_code', 'time', 'ref', 'app', '_2', 'internal_request', 'resource'],
     'filter_match': [],
     'filter_not_match': [],
-    'filter_in': [{'column': 'ip_from', 'values': ['files.deeppavlov.ai']}],
-    'filter_not_in': []
+    'filter_in': [{'column': 'domain', 'values': ['files.deeppavlov.ai']}],
+    'filter_not_in': [],
+    'transform': [{'column': 'timestamp', 'transformer': convert_to_datetime}]
 }
 
 home_dir = Path(__file__).resolve().parent
-
-
-def filter_df(in_df: pd.DataFrame, config: dict) -> pd.DataFrame:
-    filters_applied = defaultdict(list)
-
-    out_df = in_df
-
-    # isin
-    for df_filter in config['filter_in']:
-        column = df_filter['column']
-        values = df_filter['values']
-
-        if column in out_df.columns:
-            out_df = out_df[out_df[column].isin(values)]
-            filters_applied['filter_in'].append(df_filter)
-
-    for filter_type, df_filers in filters_applied.items():
-        for df_filter in df_filers:
-            config[filter_type].remove(df_filter)
-
-    return out_df
-
-
-def process_df(in_df: pd.DataFrame, config: dict) -> pd.DataFrame:
-    out_df = in_df
-
-    out_df = filter_df(out_df, config)
-
-    return out_df
 
 
 def update_log_df(config: dict) -> pd.DataFrame:
@@ -67,9 +40,9 @@ def update_log_df(config: dict) -> pd.DataFrame:
         raise FileNotFoundError(f'No source log dir found {str(log_dir)}')
 
     if pickle_file and pickle_file.is_file():
-        log_df = pd.read_pickle(str(pickle_file))
+        df_log = pd.read_pickle(str(pickle_file))
     else:
-        log_df = pd.DataFrame(columns=config['log_dataframe_fields'])
+        df_log = pd.DataFrame(columns=config['log_dataframe_fields'])
 
     if hashes_file and hashes_file.is_file():
         with hashes_file.open('r') as f:
@@ -99,20 +72,21 @@ def update_log_df(config: dict) -> pd.DataFrame:
                     log_str = f.read()
 
             parsed = re.findall(config['log_entry_pattern'], log_str, flags=re.MULTILINE)
-            append_df = pd.DataFrame(data=parsed, columns=config['log_entry_fields'])
+            df_parsed = pd.DataFrame(data=parsed, columns=config['log_entry_fields'])
 
-            #log_df = process_df(append_df, config)
-            log_df = log_df.append(other=append_df, ignore_index=True)
+            df_log = process_df(df_parsed, config)
+            #df_log = df_log.append(other=append_df, ignore_index=True)
 
             new_hashes.append(file_hash)
 
+    # TODO: unreachable for maintenance
     if new_hashes and False:
         if pickle_file:
-            log_df.to_pickle(str(pickle_file))
+            df_log.to_pickle(str(pickle_file))
 
         if hashes_file:
             hashes.extend(new_hashes)
             with hashes_file.open('w') as f:
                 f.write('\n'.join(hashes))
 
-    return log_df
+    return df_log
