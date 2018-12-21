@@ -85,9 +85,7 @@ def update_log_df(config: dict) -> pd.DataFrame:
                 raise ValueError(f'Processed data frame columns set {str(df_append_columns)} '
                                  f'is not similar to data frame columns set {str(df_log_columns)}')
 
-            df_log = df_append
-
-            #df_log = df_log.append(other=append_df, ignore_index=True)
+            df_log = df_log.append(other=df_append, ignore_index=True)
 
             new_hashes.append(file_hash)
 
