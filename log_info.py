@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 
 from log_tools import process_df
-from log_transformers import convert_to_datetime
+from log_transformers import convert_to_datetime, validate_outer_request, get_resource
 
 
 DEFAULT_CONFIG = {
@@ -20,17 +20,20 @@ DEFAULT_CONFIG = {
     'log_entry_fields': ['ip_from', 'domain', '_1', 'timestamp', 'request',
                          'response_code', 'time', 'ref', 'app', '_2'],
     'log_dataframe_fields': ['ip_from', 'domain', '_1', 'timestamp', 'request',
-                             'response_code', 'time', 'ref', 'app', '_2', 'internal_request', 'resource'],
+                             'response_code', 'time', 'ref', 'app', '_2', 'outer_request', 'resource'],
     'filter_match': [],
     'filter_not_match': [{'column': 'request', 'regexp': r'^"GET /.+md5 HTTP.+"$'}],
     'filter_in': [{'column': 'domain', 'values': ['files.deeppavlov.ai']}],
     'filter_not_in': [],
-    'transform': [{'column': 'timestamp', 'transformer': convert_to_datetime}]
+    'transform': [{'column': 'timestamp', 'transformer': convert_to_datetime},
+                  {'column': 'outer_request', 'transformer': validate_outer_request},
+                  {'column': 'resource', 'transformer': get_resource}]
 }
 
 home_dir = Path(__file__).resolve().parent
 
 
+# TODO: add logging
 def update_log_df(config: dict) -> pd.DataFrame:
     log_dir = Path(home_dir, config['log_dir']).resolve()
     pickle_file = Path(home_dir, config['pickle_file']).resolve() if config['pickle_file'] else None
@@ -73,8 +76,17 @@ def update_log_df(config: dict) -> pd.DataFrame:
 
             parsed = re.findall(config['log_entry_pattern'], log_str, flags=re.MULTILINE)
             df_parsed = pd.DataFrame(data=parsed, columns=config['log_entry_fields'])
+            df_append = process_df(df_parsed, config)
 
-            df_log = process_df(df_parsed, config)
+            df_log_columns = list(df_log.columns)
+            df_append_columns = list(df_append.columns)
+
+            if set(df_log_columns) != set(df_append_columns):
+                raise ValueError(f'Processed data frame columns set {str(df_append_columns)} '
+                                 f'is not similar to data frame columns set {str(df_log_columns)}')
+
+            df_log = df_append
+
             #df_log = df_log.append(other=append_df, ignore_index=True)
 
             new_hashes.append(file_hash)
