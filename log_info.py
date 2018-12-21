@@ -89,6 +89,8 @@ def update_log_df(config: dict) -> pd.DataFrame:
 
             new_hashes.append(file_hash)
 
+    df_log.drop_duplicates(inplace=True)
+
     # TODO: unreachable for maintenance
     if new_hashes and False:
         if pickle_file:
