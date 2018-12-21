@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 
 from log_tools import process_df
-from log_transformers import convert_to_datetime, validate_outer_request, get_resource
+from log_transformers import convert_to_datetime, validate_outer_request, get_resource, get_resource_group
 
 
 DEFAULT_CONFIG = {
@@ -17,17 +17,18 @@ DEFAULT_CONFIG = {
     'log_file_name_glob_pattern': 'access.log*',
     'log_arc_file_name_re_pattern': r'.+\.gz$',
     'log_entry_pattern': r'^(\S+?)\s(\S+?)\s(\S+?)\s(\[.+?\])\s(".+?")\s(.+?)\s(.+?)\s(".+?")\s(".+?")\s(".+?")$',
-    'log_entry_fields': ['ip_from', 'domain', '_1', 'timestamp', 'request',
-                         'response_code', 'time', 'ref', 'app', '_2'],
-    'log_dataframe_fields': ['ip_from', 'domain', '_1', 'timestamp', 'request',
-                             'response_code', 'time', 'ref', 'app', '_2', 'outer_request', 'resource'],
+    'log_entry_fields': ['ip_from', 'domain', '_1', 'timestamp', 'request', 'response_code',
+                         'time', 'ref', 'app', '_2'],
+    'log_dataframe_fields': ['ip_from', 'domain', '_1', 'timestamp', 'request', 'response_code',
+                             'time', 'ref', 'app', '_2', 'outer_request', 'resource', 'resource_group'],
     'filter_match': [],
     'filter_not_match': [{'column': 'request', 'regexp': r'^"GET /.+md5 HTTP.+"$'}],
     'filter_in': [{'column': 'domain', 'values': ['files.deeppavlov.ai']}],
     'filter_not_in': [],
     'transform': [{'column': 'timestamp', 'transformer': convert_to_datetime},
                   {'column': 'outer_request', 'transformer': validate_outer_request},
-                  {'column': 'resource', 'transformer': get_resource}]
+                  {'column': 'resource', 'transformer': get_resource},
+                  {'column': 'resource_group', 'transformer': get_resource_group}]
 }
 
 home_dir = Path(__file__).resolve().parent

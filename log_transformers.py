@@ -17,3 +17,7 @@ def get_resource(row):
     result = match.group(1) if match else None
     return result
 
+
+def get_resource_group(row):
+    result = row['resource'].strip('/').split('/')[0]
+    return result
