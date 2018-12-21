@@ -24,7 +24,7 @@ DEFAULT_CONFIG = {
     'filter_match': [],
     'filter_not_match': [{'column': 'request', 'regexp': r'^"GET /.+md5 HTTP.+"$'}],
     'filter_in': [{'column': 'domain', 'values': ['files.deeppavlov.ai']}],
-    'filter_not_in': [],
+    'filter_not_in': [{'column': 'resource_group', 'values': ['', 'favicon.ico', 'robots.txt', 'sitemap.xml']}],
     'transform': [{'column': 'timestamp', 'transformer': convert_to_datetime},
                   {'column': 'outer_request', 'transformer': validate_outer_request},
                   {'column': 'resource', 'transformer': get_resource},
