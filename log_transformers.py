@@ -2,8 +2,14 @@ import re
 from datetime import datetime
 
 
-def convert_to_datetime(row):
+def convert_str_to_datetime(row):
     result = datetime.strptime(row['timestamp'], '[%d/%b/%Y:%H:%M:%S %z]')
+    return result
+
+
+def convert_datetime_to_date(row):
+    timestamp: datetime = row['timestamp']
+    result = timestamp.date()
     return result
 
 

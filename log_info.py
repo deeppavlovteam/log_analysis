@@ -1,16 +1,18 @@
 import re
 import gzip
 import hashlib
+from copy import deepcopy
 from pathlib import Path
 
 import pandas as pd
 
 from log_tools import process_df
-from log_transformers import convert_to_datetime, validate_outer_request, get_resource, get_resource_group
+from log_transformers import convert_str_to_datetime, convert_datetime_to_date
+from log_transformers import validate_outer_request, get_resource, get_resource_group
 
 
 DEFAULT_CONFIG = {
-    'log_dir': '../nginx_t',
+    'log_dir': '../nginx',
     'pickle_file': 'logs_df.pkl',
     'hashes_file': 'hashes.txt',
     'reports_dir': 'reports',
@@ -20,22 +22,26 @@ DEFAULT_CONFIG = {
     'log_entry_fields': ['ip_from', 'domain', '_1', 'timestamp', 'request', 'response_code',
                          'time', 'ref', 'app', '_2'],
     'log_dataframe_fields': ['ip_from', 'domain', '_1', 'timestamp', 'request', 'response_code',
-                             'time', 'ref', 'app', '_2', 'outer_request', 'resource', 'resource_group'],
+                             'time', 'ref', 'app', '_2', 'date', 'outer_request', 'resource', 'resource_group'],
     'filter_match': [],
     'filter_not_match': [{'column': 'request', 'regexp': r'^"GET /.+md5 HTTP.+"$'}],
     'filter_in': [{'column': 'domain', 'values': ['files.deeppavlov.ai']}],
     'filter_not_in': [{'column': 'resource_group', 'values': ['', 'favicon.ico', 'robots.txt', 'sitemap.xml']}],
-    'transform': [{'column': 'timestamp', 'transformer': convert_to_datetime},
+    'transform': [{'column': 'timestamp', 'transformer': convert_str_to_datetime},
+                  {'column': 'date', 'transformer': convert_datetime_to_date},
                   {'column': 'outer_request', 'transformer': validate_outer_request},
                   {'column': 'resource', 'transformer': get_resource},
                   {'column': 'resource_group', 'transformer': get_resource_group}]
 }
 
 home_dir = Path(__file__).resolve().parent
+default_config = deepcopy(DEFAULT_CONFIG)
 
 
 # TODO: add logging
-def update_log_df(config: dict) -> pd.DataFrame:
+def update_log_df(config: dict = default_config) -> pd.DataFrame:
+    config = deepcopy(config)
+
     log_dir = Path(home_dir, config['log_dir']).resolve()
     pickle_file = Path(home_dir, config['pickle_file']).resolve() if config['pickle_file'] else None
     hashes_file = Path(home_dir, config['hashes_file']).resolve() if config['hashes_file'] else None
@@ -92,8 +98,7 @@ def update_log_df(config: dict) -> pd.DataFrame:
 
     df_log.drop_duplicates(inplace=True)
 
-    # TODO: unreachable for maintenance
-    if new_hashes and False:
+    if new_hashes:
         if pickle_file:
             df_log.to_pickle(str(pickle_file))
 
