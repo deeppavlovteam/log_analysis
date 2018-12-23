@@ -10,6 +10,7 @@ import pandas as pd
 from log_tools import process_df
 from log_transformers import convert_str_to_datetime, convert_datetime_to_date
 from log_transformers import validate_outer_request, get_resource, get_resource_group
+from log_reporters import count_groupby
 
 
 DEFAULT_CONFIG = {
@@ -32,7 +33,12 @@ DEFAULT_CONFIG = {
                   {'column': 'date', 'transformer': convert_datetime_to_date},
                   {'column': 'outer_request', 'transformer': validate_outer_request},
                   {'column': 'resource', 'transformer': get_resource},
-                  {'column': 'resource_group', 'transformer': get_resource_group}]
+                  {'column': 'resource_group', 'transformer': get_resource_group}],
+    'reports': [{'name': 'resources_download',
+                 'group_by': ['date', 'resource_group', 'resource', 'outer_request'],
+                 'report_by': ['request'],
+                 'rename': {'request': 'requests_number'},
+                 'reporter': count_groupby}]
 }
 
 home_dir = Path(__file__).resolve().parent
@@ -129,3 +135,25 @@ def update_log_df(config: dict) -> pd.DataFrame:
                 f.write('\n'.join(hashes))
 
     return df_log
+
+
+def make_reports(df: pd.DataFrame, config: dict = default_config) -> None:
+    reports_dir = Path(home_dir, config['reports_dir']).resolve()
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    for report_config in config['reports']:
+        report_name = report_config['name']
+        group_by = report_config['group_by']
+        report_by = report_config['report_by']
+        rename: dict = report_config['rename']
+        reporter = report_config['reporter']
+
+        df_report: pd.DataFrame = reporter(df, group_by, report_by)
+
+        if rename:
+            df_report.rename(index=str, columns=rename, inplace=True)
+
+        report_file = reports_dir / f'{report_name}.csv'
+        df_report.to_csv(str(report_file))
+
+        print(f'Generated report {report_file}')
