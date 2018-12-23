@@ -12,7 +12,7 @@ from log_transformers import validate_outer_request, get_resource, get_resource_
 
 
 DEFAULT_CONFIG = {
-    'log_dir': '../nginx',
+    'log_dir': '../../nginx',
     'pickle_file': 'logs_df.pkl',
     'hashes_file': 'hashes.txt',
     'reports_dir': 'reports',
