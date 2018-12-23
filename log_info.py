@@ -3,6 +3,7 @@ import gzip
 import hashlib
 from copy import deepcopy
 from pathlib import Path
+from multiprocessing import Process, Queue
 
 import pandas as pd
 
@@ -12,7 +13,7 @@ from log_transformers import validate_outer_request, get_resource, get_resource_
 
 
 DEFAULT_CONFIG = {
-    'log_dir': '../../nginx',
+    'log_dir': '../nginx',
     'pickle_file': 'logs_df.pkl',
     'hashes_file': 'hashes.txt',
     'reports_dir': 'reports',
@@ -38,8 +39,27 @@ home_dir = Path(__file__).resolve().parent
 default_config = deepcopy(DEFAULT_CONFIG)
 
 
+# log data frame update is isolated to separate process because of Pandas memory leaks
+def call_update_log_df(config: dict = default_config) -> pd.DataFrame:
+    def wrap_with_queue(in_queue: Queue, out_queue: Queue) -> None:
+        config_in: dict = in_queue.get()
+        out_log_df = update_log_df(config_in)
+        out_queue.put(out_log_df)
+
+    q_in = Queue()
+    q_out = Queue()
+
+    p = Process(target=wrap_with_queue, args=(q_in, q_out))
+    p.start()
+
+    q_in.put(config)
+    log_df = q_out.get()
+
+    return log_df
+
+
 # TODO: add logging
-def update_log_df(config: dict = default_config) -> pd.DataFrame:
+def update_log_df(config: dict) -> pd.DataFrame:
     config = deepcopy(config)
 
     log_dir = Path(home_dir, config['log_dir']).resolve()
@@ -73,6 +93,7 @@ def update_log_df(config: dict = default_config) -> pd.DataFrame:
         file_hash = hash_md5.hexdigest()
 
         if file_hash not in hashes:
+            print(f'Processing file {str(log_file)}')
             if re.fullmatch(config['log_arc_file_name_re_pattern'], log_file.name):
                 with gzip.open(log_file, 'rb') as f:
                     log_bytes: bytes = f.read()

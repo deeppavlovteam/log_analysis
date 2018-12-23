@@ -50,8 +50,6 @@ def filter_df(df: pd.DataFrame, config: dict) -> pd.DataFrame:
 
 # TODO: add column names passing to transformer via decorator
 def apply_to_df(df: pd.DataFrame, config: dict) -> pd.DataFrame:
-    df = deepcopy(df)
-
     for df_transformer in config['transform']:
         column = df_transformer['column']
         transformer = df_transformer['transformer']
