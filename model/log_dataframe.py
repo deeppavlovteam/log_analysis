@@ -17,8 +17,11 @@ class LogDataFrame:
 
         config_df_columns: list = self._config['log_dataframe_columns']
         home_dir = Path(__file__).resolve().parent
+
         pickle_file = Path(home_dir, config['pickle_file']).resolve() if config['pickle_file'] else None
         hashes_file = Path(home_dir, config['hashes_file']).resolve() if config['hashes_file'] else None
+        self._config['pickle_file'] = pickle_file
+        self._config['hashes_file'] = hashes_file
 
         if df:
             df_columns = list(df.columns)
@@ -121,7 +124,7 @@ class LogDataFrame:
 
         return processed_df
 
-    def _update_from_files(self, log_dir: Path):
+    def _update_from_files(self, log_dir: Path) -> None:
         update_files = {}
 
         for log_file in log_dir.glob(self._config['log_file_name_glob_pattern']):
@@ -168,3 +171,21 @@ class LogDataFrame:
                 self._hashes.extend(list(update_files.keys()))
                 with hashes_file.open('w') as f:
                     f.write('\n'.join(self._hashes))
+
+    def _update_from_df(self, df_update: pd.DataFrame) -> None:
+        df_processed = self._wrap_process_df(df_update)
+
+        df_columns = list(self._df.columns)
+        df_processed_columns = list(df_processed.columns)
+
+        if set(df_columns) != set(df_processed_columns):
+            raise ValueError(f'Unmatching data frame columns sets\n'
+                             f'\tdata frame columns: {str(df_columns)}\n'
+                             f'\tappending columns: {str(df_processed_columns)}')
+
+        self._df = self._df.append(other=df_processed, ignore_index=True)
+        self._df.drop_duplicates(inplace=True)
+
+        pickle_file = self._config['pickle_file']
+        if pickle_file:
+            self._df.to_pickle(str(pickle_file))
