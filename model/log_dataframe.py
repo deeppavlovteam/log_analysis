@@ -70,32 +70,34 @@ class LogDataFrame:
         return df
 
     @staticmethod
-    def _filter_df(df: pd.DataFrame, config: dict) -> pd.DataFrame:
+    def _filter_df(df: pd.DataFrame, config: dict, pre_filters: bool = False) -> pd.DataFrame:
+        filters = 'pre_filters' if pre_filters else 'post_filters'
+
         # further '== True/False' instead of 'is True/False' is for pandas dark magic
 
         # filter_match
-        for df_filter in config['filter_match']:
+        for df_filter in config[filters]['filter_match']:
             column = df_filter['column']
             regexp = df_filter['regexp']
             if column in df.columns:
                 df = df[df[column].str.match(regexp) == True]
 
         # filter_not_match
-        for df_filter in config['filter_not_match']:
+        for df_filter in config[filters]['filter_not_match']:
             column = df_filter['column']
             regexp = df_filter['regexp']
             if column in df.columns:
                 df = df[df[column].str.match(regexp) == False]
 
         # filter_in
-        for df_filter in config['filter_in']:
+        for df_filter in config[filters]['filter_in']:
             column = df_filter['column']
             values = df_filter['values']
             if column in df.columns:
                 df = df[df[column].isin(values) == True]
 
         # filter_not_in
-        for df_filter in config['filter_not_in']:
+        for df_filter in config[filters]['filter_not_in']:
             column = df_filter['column']
             values = df_filter['values']
             if column in df.columns:
@@ -105,6 +107,7 @@ class LogDataFrame:
 
     @staticmethod
     def _process_df(df: pd.DataFrame, config: dict) -> pd.DataFrame:
+        df = LogDataFrame._filter_df(df, config, True)
         df = LogDataFrame._apply_to_df(df, config)
         df = LogDataFrame._filter_df(df, config)
         return df
