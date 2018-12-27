@@ -27,7 +27,7 @@
     ```
 7. Run deployment script:
     ```
-    python deployment.py 
+    python deploy.py 
     ```
 8. Run launch script:
     ```
