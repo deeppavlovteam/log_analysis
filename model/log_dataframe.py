@@ -4,6 +4,7 @@ import hashlib
 from copy import deepcopy
 from pathlib import Path
 from multiprocessing import Process, Queue
+from typing import Optional, Union
 
 import pandas as pd
 
@@ -16,10 +17,12 @@ class LogDataFrame:
         self._hashes: list
 
         config_df_columns: list = self._config['log_dataframe_columns']
-        home_dir = Path(__file__).resolve().parent
 
-        pickle_file = Path(home_dir, config['pickle_file']).resolve() if config['pickle_file'] else None
-        hashes_file = Path(home_dir, config['hashes_file']).resolve() if config['hashes_file'] else None
+        log_dir = Path(config['log_dir']).resolve() if config['log_dir'] else None
+        pickle_file = Path(config['pickle_file']).resolve() if config['pickle_file'] else None
+        hashes_file = Path(config['hashes_file']).resolve() if config['hashes_file'] else None
+
+        self._config['log_dir'] = log_dir
         self._config['pickle_file'] = pickle_file
         self._config['hashes_file'] = hashes_file
 
@@ -142,7 +145,7 @@ class LogDataFrame:
         for log_file in update_files.values():
             print(f'Processing file {str(log_file)}')
             log_str = self._read_file(log_file)
-            parsed = re.findall(self._config['log_entry_pattern'], log_str, flags=re.MULTILINE)
+            parsed = re.findall(self._config['log_source_pattern'], log_str, flags=re.MULTILINE)
 
             if parsed:
                 df_parsed = pd.DataFrame(data=parsed, columns=self._config['log_source_fields'])
@@ -189,3 +192,14 @@ class LogDataFrame:
         pickle_file = self._config['pickle_file']
         if pickle_file:
             self._df.to_pickle(str(pickle_file))
+
+    def update(self, source: Optional[Union[str, Path, pd.DataFrame]] = None) -> None:
+        if not source:
+            self._update_from_files(self._config['log_dir'])
+        elif isinstance(source, (str, Path)):
+            self._update_from_files(Path(source).resolve())
+        elif isinstance(source, pd.DataFrame):
+            self._wrap_process_df(source)
+
+    def df(self) -> pd.DataFrame:
+        return self._df
