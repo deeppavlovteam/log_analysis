@@ -148,7 +148,7 @@ class LogDataFrame:
         return processed_df
 
     def _update_from_files(self, log_dir: Path):
-        update_files = []
+        update_files = {}
 
         for log_file in log_dir.glob(self._config['log_file_name_glob_pattern']):
             hash_md5 = hashlib.md5()
@@ -160,12 +160,13 @@ class LogDataFrame:
             file_hash = hash_md5.hexdigest()
 
             if file_hash not in self._hashes:
-                update_files.append((log_file, file_hash))
+                update_files[file_hash] = log_file
 
-        for log_file, file_hash in update_files:
+        for log_file in update_files.values():
             print(f'Processing file {str(log_file)}')
             log_str = self._read_file(log_file)
             parsed = re.findall(self._config['log_entry_pattern'], log_str, flags=re.MULTILINE)
+
             if parsed:
                 df_parsed = pd.DataFrame(data=parsed, columns=self._config['log_source_fields'])
                 df_processed = self._wrap_process_df(df_parsed)
@@ -174,9 +175,22 @@ class LogDataFrame:
                 df_processed_columns = list(df_processed.columns)
 
                 if set(df_columns) != set(df_processed_columns):
-                    raise ValueError(f'Processed data frame columns set {str(df_append_columns)} '
-                                     f'is not similar to data frame columns set {str(df_log_columns)}')
+                    raise ValueError(f'Unmatching data frame columns sets\n'
+                                     f'\tdata frame columns: {str(df_columns)}\n'
+                                     f'\tappending columns: {str(df_processed_columns)}')
 
-                df_log = df_log.append(other=df_append, ignore_index=True)
+                self._df = self._df.append(other=df_processed, ignore_index=True)
 
-                new_hashes.append(file_hash)
+        self._df.drop_duplicates(inplace=True)
+
+        if update_files:
+            pickle_file = self._config['pickle_file']
+            hashes_file = self._config['hashes_file']
+
+            if pickle_file:
+                self._df.to_pickle(str(pickle_file))
+
+            if hashes_file:
+                self._hashes.extend(list(update_files.keys()))
+                with hashes_file.open('w') as f:
+                    f.write('\n'.join(self._hashes))
