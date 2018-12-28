@@ -106,14 +106,17 @@ class LogDataFrame:
         return df
 
     @staticmethod
-    def _process_df(df: pd.DataFrame, config: dict) -> pd.DataFrame:
+    def _process_df(df: pd.DataFrame, config: dict) -> Optional[pd.DataFrame]:
         df = LogDataFrame._filter_df(df, config, True)
-        df = LogDataFrame._apply_to_df(df, config)
-        df = LogDataFrame._filter_df(df, config)
-        return df
+        if df.shape[0] > 0:
+            df = LogDataFrame._apply_to_df(df, config)
+            df = LogDataFrame._filter_df(df, config)
+            return df
+        else:
+            return None
 
     # log data frame processing is isolated to separate process because of Pandas memory leaks
-    def _wrap_process_df(self, df: pd.DataFrame) -> pd.DataFrame:
+    def _wrap_process_df(self, df: pd.DataFrame) -> Optional[pd.DataFrame]:
         def wrap_with_queue(in_queue: Queue, out_queue: Queue) -> None:
             df_in, config_in = in_queue.get()
             df_out = self._process_df(df_in, config_in)
@@ -153,7 +156,10 @@ class LogDataFrame:
             if parsed:
                 df_parsed = pd.DataFrame(data=parsed, columns=self._config['log_source_fields'])
                 df_processed = self._wrap_process_df(df_parsed)
+            else:
+                continue
 
+            if df_processed is not None:
                 df_columns = list(self._df.columns)
                 df_processed_columns = list(df_processed.columns)
 

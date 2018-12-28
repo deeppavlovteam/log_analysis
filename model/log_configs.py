@@ -2,11 +2,11 @@ from model.log_transformers import convert_str_to_datetime, convert_datetime_to_
 from model.log_transformers import get_resource, get_resource_group
 
 DEFAULT_CONFIG = {
-    'log_dir': '../nginx_t',
+    'log_dir': '../nginx',
     'pickle_file': 'logs_df.pkl',
     'hashes_file': 'hashes.txt',
     'reports_dir': 'reports',
-    'log_file_name_glob_pattern': 'access.log*',
+    'log_file_name_glob_pattern': '*access.log*',
     'log_arc_file_name_re_pattern': r'.+\.gz$',
     'log_source_pattern': r'^(\S+?)\s(\S+?)\s(\S+?)\s(\[.+?\])\s(".+?")\s(.+?)\s(.+?)\s(".+?")\s(".+?")\s(".+?")$',
     'log_source_fields': ['ip_from', 'domain', '_1', 'timestamp', 'request', 'response_code',
