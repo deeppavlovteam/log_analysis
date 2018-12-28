@@ -4,13 +4,21 @@ from ipaddress import IPv4Address, IPv4Network
 
 
 def convert_str_to_datetime(row):
-    result = datetime.strptime(row['timestamp'], '[%d/%b/%Y:%H:%M:%S %z]')
+    if isinstance(row['timestamp'], str):
+        result = datetime.strptime(row['timestamp'], '[%d/%b/%Y:%H:%M:%S %z]')
+    else:
+        result = None
+
     return result
 
 
 def convert_datetime_to_date(row):
-    timestamp: datetime = row['timestamp']
-    result = timestamp.date()
+    if isinstance(row['timestamp'], datetime):
+        timestamp: datetime = row['timestamp']
+        result = timestamp.date()
+    else:
+        result = None
+
     return result
 
 
@@ -30,11 +38,19 @@ def validate_outer_request(row):
 
 
 def get_resource(row):
-    match = re.search(r'^"GET\s+(.+)\s+HTTP.+"$', row['request'])
-    result = match.group(1) if match else None
+    if isinstance(row['request'], str):
+        match = re.search(r'^"GET\s+(.+)\s+HTTP.+"$', row['request'])
+        result = match.group(1) if match else None
+    else:
+        result = None
+
     return result
 
 
 def get_resource_group(row):
-    result = row['resource'].strip('/').split('/')[0]
+    if isinstance(row['resource'], str):
+        result = row['resource'].strip('/').split('/')[0]
+    else:
+        result = None
+
     return result
