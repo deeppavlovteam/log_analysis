@@ -212,13 +212,17 @@ class LogDataFrame:
 
         return df_processed
 
-    def update(self, source: Optional[Union[str, Path, pd.DataFrame]] = None) -> None:
+    def update(self, source: Optional[Union[str, Path, pd.DataFrame]] = None) -> Optional[pd.DataFrame]:
         if source is None:
-            self._update_from_files(self._config['log_dir'])
+            result = self._update_from_files(self._config['log_dir'])
         elif isinstance(source, (str, Path)):
-            self._update_from_files(Path(source).resolve())
+            result = self._update_from_files(Path(source).resolve())
         elif isinstance(source, pd.DataFrame):
-            self._update_from_df(source)
+            result = self._update_from_df(source)
+        else:
+            result = None
+
+        return result
 
     def df(self) -> pd.DataFrame:
         return self._df
