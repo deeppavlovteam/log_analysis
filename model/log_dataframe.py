@@ -107,10 +107,10 @@ class LogDataFrame:
 
     @staticmethod
     def _process_df(df: pd.DataFrame, config: dict) -> Optional[pd.DataFrame]:
-        df = LogDataFrame._filter_df(df, config, True)
+        df = LogDataFrame._filter_df(df.copy(), config, True)
         if df.shape[0] > 0:
-            df = LogDataFrame._apply_to_df(df, config)
-            df = LogDataFrame._filter_df(df, config)
+            df = LogDataFrame._apply_to_df(df.copy(), config)
+            df = LogDataFrame._filter_df(df.copy(), config)
             return df
         else:
             return None
@@ -133,7 +133,8 @@ class LogDataFrame:
 
         return processed_df
 
-    def _update_from_files(self, log_dir: Path) -> None:
+    def _update_from_files(self, log_dir: Path) -> Optional[pd.DataFrame]:
+        df_update: Optional[pd.DataFrame] = None
         update_files = {}
 
         for log_file in log_dir.glob(self._config['log_file_name_glob_pattern']):
@@ -168,8 +169,12 @@ class LogDataFrame:
                                      f'\tdata frame columns: {str(df_columns)}\n'
                                      f'\tappending columns: {str(df_processed_columns)}')
 
-                self._df = self._df.append(other=df_processed, ignore_index=True)
+                if df_update is None:
+                    df_update = df_processed
+                else:
+                    df_update = df_update.append(other=df_processed, ignore_index=True)
 
+        self._df = self._df.append(other=df_update, ignore_index=True)
         self._df.drop_duplicates(inplace=True)
 
         if update_files:
@@ -184,31 +189,36 @@ class LogDataFrame:
                 with hashes_file.open('w') as f:
                     f.write('\n'.join(self._hashes))
 
-    def _update_from_df(self, df_update: pd.DataFrame) -> None:
+        return df_update
+
+    def _update_from_df(self, df_update: pd.DataFrame) -> Optional[pd.DataFrame]:
         df_processed = self._wrap_process_df(df_update)
 
-        df_columns = list(self._df.columns)
-        df_processed_columns = list(df_processed.columns)
+        if df_processed is not None:
+            df_columns = list(self._df.columns)
+            df_processed_columns = list(df_processed.columns)
 
-        if set(df_columns) != set(df_processed_columns):
-            raise ValueError(f'Unmatching data frame columns sets\n'
-                             f'\tdata frame columns: {str(df_columns)}\n'
-                             f'\tappending columns: {str(df_processed_columns)}')
+            if set(df_columns) != set(df_processed_columns):
+                raise ValueError(f'Unmatching data frame columns sets\n'
+                                 f'\tdata frame columns: {str(df_columns)}\n'
+                                 f'\tappending columns: {str(df_processed_columns)}')
 
-        self._df = self._df.append(other=df_processed, ignore_index=True)
-        self._df.drop_duplicates(inplace=True)
+            self._df = self._df.append(other=df_processed, ignore_index=True)
+            self._df.drop_duplicates(inplace=True)
 
-        pickle_file = self._config['pickle_file']
-        if pickle_file:
-            self._df.to_pickle(str(pickle_file))
+            pickle_file = self._config['pickle_file']
+            if pickle_file:
+                self._df.to_pickle(str(pickle_file))
+
+        return df_processed
 
     def update(self, source: Optional[Union[str, Path, pd.DataFrame]] = None) -> None:
-        if not source:
+        if source is None:
             self._update_from_files(self._config['log_dir'])
         elif isinstance(source, (str, Path)):
             self._update_from_files(Path(source).resolve())
         elif isinstance(source, pd.DataFrame):
-            self._wrap_process_df(source)
+            self._update_from_df(source)
 
     def df(self) -> pd.DataFrame:
         return self._df
