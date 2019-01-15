@@ -8,7 +8,7 @@ from typing import Optional, Union
 
 import pandas as pd
 
-from model.log_tools import check_file_md5
+from model.log_tools import get_file_md5_hash
 
 
 # TODO: add logging
@@ -140,8 +140,9 @@ class LogDataFrame:
         update_files = {}
 
         for log_file in log_dir.glob(self._config['log_file_name_glob_pattern']):
-            file_hash, check_result = check_file_md5(log_file, self._hashes)
-            if not check_result:
+            file_hash = get_file_md5_hash(log_file)
+
+            if file_hash not in self._hashes:
                 update_files[file_hash] = log_file
 
         for log_file in update_files.values():

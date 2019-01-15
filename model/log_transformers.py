@@ -1,5 +1,4 @@
 import re
-from pathlib import Path
 from datetime import datetime
 from ipaddress import IPv4Address, IPv4Network
 
@@ -55,12 +54,3 @@ def get_resource_group(row):
         result = None
 
     return result
-
-
-def update_geolite_db():
-    dp_arc_url = 'http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz'
-    hash_url = 'http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.md5'
-
-    arc_path = Path('../temp/GeoLite2-City.mmdb.gz')
-    db_path = Path('../temp/GeoLite2-City.mmdb')
-
