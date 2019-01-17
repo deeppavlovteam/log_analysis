@@ -36,7 +36,7 @@ DEFAULT_CONFIG = {
 }
 
 RAW_FILES_LOG_CONFIG = {
-    'log_dir': '../nginx_t',
+    'log_dir': '/var/log/nginx',
     'pickle_file': '../raw_logs_df.pkl',
     'hashes_file': '../raw_hashes.txt',
     'reports_dir': 'reports',
