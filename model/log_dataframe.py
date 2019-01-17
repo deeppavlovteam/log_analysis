@@ -13,7 +13,7 @@ from model.log_tools import get_file_md5_hash
 
 # TODO: add logging
 class LogDataFrame:
-    def __init__(self, config: dict, df: pd.DataFrame = None) -> None:
+    def __init__(self, config: dict, df: Optional[pd.DataFrame] = None) -> None:
         self._config = deepcopy(config)
         self._df: pd.DataFrame
         self._hashes: list
@@ -28,7 +28,7 @@ class LogDataFrame:
         self._config['pickle_file'] = pickle_file
         self._config['hashes_file'] = hashes_file
 
-        if df:
+        if df is not None:
             df_columns = list(df.columns)
             if set(df_columns) == set(config_df_columns):
                 self._df = df
