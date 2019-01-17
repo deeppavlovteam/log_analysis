@@ -119,3 +119,5 @@ dmypy.json
 logs_df.pkl
 hashes.txt
 reports/
+temp/
+processing/

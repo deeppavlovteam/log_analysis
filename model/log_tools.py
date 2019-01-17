@@ -26,7 +26,7 @@ def get_file_md5_hash(file_path: Path) -> str:
     return file_hash
 
 
-class _GeoliteDbWrapper:
+class GeoliteDbWrapper:
     def __init__(self) -> None:
         self._dp_arc_url = GEOLITE_DB_ARC_URL
         self._hash_url = GEOLITE_HASH_URL

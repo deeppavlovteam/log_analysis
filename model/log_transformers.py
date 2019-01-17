@@ -2,6 +2,11 @@ import re
 from datetime import datetime
 from ipaddress import IPv4Address, IPv4Network
 
+from model.log_tools import GeoliteDbWrapper
+
+
+geolite_db_wrapper = GeoliteDbWrapper()
+
 
 def convert_str_to_datetime(row):
     if isinstance(row['timestamp'], str):
@@ -51,6 +56,28 @@ def get_resource_group(row):
     if isinstance(row['resource'], str):
         result = row['resource'].strip('/').split('/')[0]
     else:
+        result = None
+
+    return result
+
+
+def get_country_from_ip(row):
+    try:
+        ip_info = geolite_db_wrapper.get_ip_info(row['ip_from'])
+        result = ip_info['country']['names']['en'] if isinstance(ip_info, dict) else None
+
+    except (ValueError, KeyError):
+        result = None
+
+    return result
+
+
+def get_city_from_ip(row):
+    try:
+        ip_info = geolite_db_wrapper.get_ip_info(row['ip_from'])
+        result = ip_info['city']['names']['en'] if isinstance(ip_info, dict) else None
+
+    except (ValueError, KeyError):
         result = None
 
     return result
