@@ -37,8 +37,8 @@ DEFAULT_CONFIG = {
 
 RAW_FILES_LOG_CONFIG = {
     'log_dir': '/var/log/nginx',
-    'pickle_file': '../raw_logs_df.pkl',
-    'hashes_file': '../raw_hashes.txt',
+    'pickle_file': '/home/litinsky/log_analysis/raw_logs_df.pkl',
+    'hashes_file': '/home/litinsky/log_analysis/raw_hashes.txt',
     'reports_dir': 'reports',
     'log_file_name_glob_pattern': '*access.log*',
     'log_arc_file_name_re_pattern': r'.+\.gz$',
@@ -65,7 +65,7 @@ RAW_FILES_LOG_CONFIG = {
 
 PROCESSED_FILES_LOG_CONFIG = {
     'log_dir': '',
-    'pickle_file': '../logs_df.pkl',
+    'pickle_file': '/home/litinsky/log_analysis/logs_df.pkl',
     'hashes_file': '',
     'reports_dir': 'reports',
     'log_file_name_glob_pattern': '*access.log*',
