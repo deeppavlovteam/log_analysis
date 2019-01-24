@@ -33,8 +33,9 @@
     ```
     python deploy.py 
     ```
-9. Run launch script:
+9. `cd` back to log_analysis dir and run launch script:
     ```
+    cd ..
     ./run_log_analysis.sh
     ```
 10. To create update task:
