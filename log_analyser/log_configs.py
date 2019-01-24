@@ -1,5 +1,5 @@
-from model.log_transformers import convert_str_to_datetime, convert_datetime_to_date, validate_outer_request
-from model.log_transformers import get_resource, get_resource_group, get_country_from_ip, get_city_from_ip
+from log_analyser.log_transformers import convert_str_to_datetime, convert_datetime_to_date, validate_outer_request
+from log_analyser.log_transformers import get_resource, get_resource_group, get_country_from_ip, get_city_from_ip
 
 
 DEFAULT_CONFIG = {

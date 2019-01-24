@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from ipaddress import IPv4Address, IPv4Network
 
-from model.log_tools import GeoliteDbWrapper
+from log_analyser.log_tools import GeoliteDbWrapper
 
 
 geolite_db_wrapper = GeoliteDbWrapper()

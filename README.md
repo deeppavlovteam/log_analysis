@@ -13,9 +13,9 @@
     virtualenv env -p python3.6
     source env/bin/activate
     ```
-4. Install dependencies:
+4. Install:
     ```
-    pip install -r requirements.txt
+    python setup.py develop
     ```
 5. Set Jupyter password:
     ```
@@ -37,3 +37,12 @@
     ```
     ./run_log_analysis.sh
     ```
+10. To create update task:
+    1. Open crontab editor with:
+        ```
+        crontab -e
+        ```
+    2. Add task according following mask:
+        ```
+        * * * * * cd </path/to/dir/where/to/store/update/logs> && </path/to/python> </path/to/update.py>
+        ```

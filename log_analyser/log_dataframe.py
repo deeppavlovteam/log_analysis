@@ -1,6 +1,5 @@
 import re
 import gzip
-import hashlib
 from copy import deepcopy
 from pathlib import Path
 from multiprocessing import Process, Queue
@@ -8,7 +7,7 @@ from typing import Optional, Union
 
 import pandas as pd
 
-from model.log_tools import get_file_md5_hash
+from log_analyser.log_tools import get_file_md5_hash
 
 
 # TODO: add logging
