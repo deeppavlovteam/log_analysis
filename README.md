@@ -25,11 +25,15 @@
     ```
     jupyter notebook --generate-config
     ```
-7. Run deployment script:
+7. `cd` scripts dir:
+    ```
+    cd scripts
+    ```
+8. Run deployment script:
     ```
     python deploy.py 
     ```
-8. Run launch script:
+9. Run launch script:
     ```
     ./run_log_analysis.sh
     ```
