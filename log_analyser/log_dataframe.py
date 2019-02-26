@@ -1,6 +1,5 @@
 import re
 import gzip
-import hashlib
 from copy import deepcopy
 from pathlib import Path
 from multiprocessing import Process, Queue
@@ -8,10 +7,12 @@ from typing import Optional, Union
 
 import pandas as pd
 
+from log_analyser.log_tools import get_file_md5_hash
+
 
 # TODO: add logging
 class LogDataFrame:
-    def __init__(self, config: dict, df: pd.DataFrame = None) -> None:
+    def __init__(self, config: dict, df: Optional[pd.DataFrame] = None) -> None:
         self._config = deepcopy(config)
         self._df: pd.DataFrame
         self._hashes: list
@@ -26,7 +27,7 @@ class LogDataFrame:
         self._config['pickle_file'] = pickle_file
         self._config['hashes_file'] = hashes_file
 
-        if df:
+        if df is not None:
             df_columns = list(df.columns)
             if set(df_columns) == set(config_df_columns):
                 self._df = df
@@ -138,13 +139,7 @@ class LogDataFrame:
         update_files = {}
 
         for log_file in log_dir.glob(self._config['log_file_name_glob_pattern']):
-            hash_md5 = hashlib.md5()
-
-            with log_file.open('rb') as f:
-                for chunk in iter(lambda: f.read(4096), b''):
-                    hash_md5.update(chunk)
-
-            file_hash = hash_md5.hexdigest()
+            file_hash = get_file_md5_hash(log_file)
 
             if file_hash not in self._hashes:
                 update_files[file_hash] = log_file

@@ -1,5 +1,5 @@
-from model.log_transformers import convert_str_to_datetime, convert_datetime_to_date, validate_outer_request
-from model.log_transformers import get_resource, get_resource_group
+from log_analyser.log_transformers import convert_str_to_datetime, convert_datetime_to_date, validate_outer_request
+from log_analyser.log_transformers import get_resource, get_resource_group, get_country_from_ip, get_city_from_ip
 
 
 DEFAULT_CONFIG = {
@@ -37,8 +37,8 @@ DEFAULT_CONFIG = {
 
 RAW_FILES_LOG_CONFIG = {
     'log_dir': '/var/log/nginx',
-    'pickle_file': '../raw_logs_df.pkl',
-    'hashes_file': '../raw_hashes.txt',
+    'pickle_file': '/home/litinsky/log_analysis/raw_logs_df.pkl',
+    'hashes_file': '/home/litinsky/log_analysis/raw_hashes.txt',
     'reports_dir': 'reports',
     'log_file_name_glob_pattern': '*access.log*',
     'log_arc_file_name_re_pattern': r'.+\.gz$',
@@ -65,16 +65,17 @@ RAW_FILES_LOG_CONFIG = {
 
 PROCESSED_FILES_LOG_CONFIG = {
     'log_dir': '',
-    'pickle_file': '../logs_df.pkl',
+    'pickle_file': '/home/litinsky/log_analysis/logs_df.pkl',
     'hashes_file': '',
     'reports_dir': 'reports',
     'log_file_name_glob_pattern': '*access.log*',
     'log_arc_file_name_re_pattern': r'',
     'log_source_pattern': r'',
-    'log_source_fields': ['ip_from', 'domain', '_1', 'timestamp', 'request', 'response_code',
-                          'bytes', 'ref', 'app', '_2'],
-    'log_dataframe_columns': ['ip_from', 'domain', '_1', 'timestamp', 'request', 'response_code',
-                              'bytes', 'ref', 'app', '_2', 'date', 'outer_request', 'resource', 'resource_group'],
+    'log_source_fields': ['ip_from', 'domain', '_1', 'timestamp', 'request', 'response_code', 'bytes',
+                          'ref', 'app', '_2'],
+    'log_dataframe_columns': ['ip_from', 'domain', '_1', 'timestamp', 'request', 'response_code', 'bytes',
+                              'ref', 'app', '_2', 'date', 'outer_request', 'resource', 'resource_group',
+                              'country_from', 'city_from'],
 
     'pre_filters': {
         'filter_match': [],
@@ -86,7 +87,9 @@ PROCESSED_FILES_LOG_CONFIG = {
                   {'column': 'date', 'transformer': convert_datetime_to_date},
                   {'column': 'outer_request', 'transformer': validate_outer_request},
                   {'column': 'resource', 'transformer': get_resource},
-                  {'column': 'resource_group', 'transformer': get_resource_group}],
+                  {'column': 'resource_group', 'transformer': get_resource_group},
+                  {'column': 'country_from', 'transformer': get_country_from_ip},
+                  {'column': 'city_from', 'transformer': get_city_from_ip}],
     'post_filters': {
         'filter_match': [],
         'filter_not_match': [],
