@@ -75,20 +75,24 @@ class DBManager:
                         config = parts[0][1]
             if req.endswith('.md5'):
                 continue
-            rec = Record(
-                ip_from=row['ip_from'],
-                timestamp=row['timestamp'],
-                file=req,
-                config=config,
-                response_code=row['response_code'],
-                bytes=row['bytes'],
-                ref=row['ref'],
-                app=row['app'],
-                forwarded_for=row['_2'],
-                outer_request=row['outer_request'],
-                country=row['country_from'],
-                city=row['city_from']
-            )
+            try:
+                rec = Record(
+                    ip_from=row['ip_from'],
+                    timestamp=row['timestamp'],
+                    file=req,
+                    config=config,
+                    response_code=int(row['response_code']),
+                    bytes=row['bytes'],
+                    ref=row['ref'],
+                    app=row['app'],
+                    forwarded_for=row['_2'],
+                    outer_request=row['outer_request'],
+                    country=row['country_from'],
+                    city=row['city_from']
+                )
+            except ValueError as e:
+                log.error(e)
+                continue
             self._session.add(rec)
             records_added += 1
         for hash in new_hashes:
@@ -143,7 +147,7 @@ class DBManager:
 
 
 if __name__ == '__main__':
-    sess = get_session('nginx', 'nginx', '0.0.0.0:5432', 'nginx_logs')
+    sess = get_session('nginx', 'nginx', '192.168.10.78:5432', 'nginx_logs')
     manager = DBManager(sess)
-#    manager.load_pkl('/home/ignatov/log_stuff/log_analysis/logs_df_processed.pkl', '/home/ignatov/log_stuff/log_analysis/raw_hashes.txt')
-#    manager.update_configs('/home/ignatov/dev/DeepPavlov/deeppavlov/configs', '0.1.6')
+#    manager.load_pkl('/home/ignatov/log_stuff/new/processed.pkl', '/home/ignatov/log_stuff/new/raw_hashes.txt')
+#    manager.update_configs('/home/ignatov/dev/DeepPavlov/deeppavlov/configs', '0.9.1')

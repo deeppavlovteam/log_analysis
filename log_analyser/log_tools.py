@@ -10,8 +10,8 @@ from maxminddb.reader import Reader
 
 GEOLITE_DB_ARC_URL = 'http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz'
 GEOLITE_HASH_URL = 'http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.md5'
-GEOLITE_DB_PATH = '../temp/GeoLite2-City.mmdb'
-GEOLITE_HASH_PATH = '../temp/GeoLite2-City.mmdb.md5'
+GEOLITE_DB_PATH = '/home/ignatov/log_stuff/log_analysis/temp/GeoLite2-City.mmdb'
+GEOLITE_HASH_PATH = '/home/ignatov/log_stuff/log_analysis/temp/GeoLite2-City.mmdb.md5'
 
 
 def get_file_md5_hash(file_path: Path) -> str:
@@ -34,9 +34,10 @@ class GeoliteDbWrapper:
         self._hash_path = Path(GEOLITE_HASH_PATH).resolve()
 
         self._db_upd_check_date = date.fromtimestamp(0)
-        self._db_reader: Reader = self._db_reader if self._update_db() else open_database(self._db_path)
+        self._db_reader: Reader = open_database(self._db_path)
 
     def _update_db(self) -> bool:
+        return True
         updated = False
 
         if date.today() > self._db_upd_check_date:
