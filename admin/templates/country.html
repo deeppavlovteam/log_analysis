@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Display Table</title>
+    <script type="text/javascript" src="/static/js/app.js"></script>
+</head>
+<body>
+        <table id="table">
+        {% if dict_table %}
+        <tr>
+            {% for key in dict_table[0] %}
+              <th onclick="sortTable({{ loop.index }})" style="cursor:crosshair">{{ key }}</th>
+            {% endfor %}
+        </tr>
+        {% endif %}
+
+        {% for dict in dict_table %}
+        <tr>
+            {% for value in dict.values() %}
+                <td>{{ value }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

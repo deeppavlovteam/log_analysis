@@ -1,89 +1,38 @@
-import json
-from collections import defaultdict
-
-import requests
-from flask import Flask, Response, redirect, flash
-from flask_admin import Admin
-from flask_admin.actions import action
-from flask_admin.contrib.sqla import ModelView
-from flask_admin.contrib.sqla.filters import BaseSQLAFilter
-from flask_admin.model.filters import BaseBooleanFilter
-from flask_basicauth import BasicAuth
-from jinja2 import Markup
-from sqlalchemy.orm.session import Session
-from sqlalchemy.orm.strategy_options import joinedload
-from sqlalchemy.sql import func, text
-from werkzeug.exceptions import HTTPException
-from sqlalchemy.orm.exc import NoResultFound
-
-from db.db import get_session
-from db.models.record import Record
-from db.models.config import Config
-
+from flask import Flask, render_template, request, url_for
+from sqlalchemy import text, create_engine
 
 app = Flask(__name__)
-#basic_auth = BasicAuth(app)
 
-#class AuthException(HTTPException):
-#    def __init__(self, message):
-#        super().__init__(message, Response(
-#            message, 401,
-#            {'WWW-Authenticate': 'Basic realm="Login Required"'}
-#        ))
+engine = create_engine(f'postgresql://nginx:nginx@192.168.10.78/nginx_logs')
 
 
-class SafeModelView(ModelView):
-    can_delete = False
-    can_create = False
-    can_edit = False
-
-#    def is_accessible(self):
-#        if not basic_auth.authenticate():
-#            raise AuthException('Not authenticated. Refresh the page.')
-#        else:
-#            return True
-
-#    def inaccessible_callback(self, name, **kwargs):
-#        return redirect(basic_auth.challenge())
+def get_table():
+    with engine.connect() as connection:
+        res = connection.execute(text('select config.name, (select count(*) from record where record.file=any(config.files) and record.outer_request is True) as TOT,'
+                                      ' cardinality(config.files) from config'))
+        res = [{'name': name, 'popularity': round(cnt/ln,1)} for name, cnt, ln in res]
+    return sorted(res, key=lambda x: x['popularity'], reverse=True)
 
 
-class ConfigModelView(SafeModelView):
-    page_size=300
+def get_countries(name):
+    with engine.connect() as connection:
+        res = connection.execute(text(f"select country, count(*) from record where file=any(select unnest(files) from config where name='{name}') and outer_request is true group by country;"))
+        res = [{'country': cnt, 'reqs': reqs} for cnt, reqs in res]
+        total = sum([x['reqs'] for x in res])
+        [x.update({'%': round(x['reqs']*100/total, 2)}) for x in res]
+    return sorted(res, key=lambda x: x['reqs'], reverse=True)
 
 
-class FilterBySuccess(BaseSQLAFilter, BaseBooleanFilter):
-    def apply(self, query, value, alias=None):
-        if value == '1':
-            return query.filter(Record.response_code == 200)
-        else:
-            print(query)
-            return query.filter(Record.response_code != 200)
-
-    def operation(self):
-        return u'true'
-
-class FilterOuter(BaseSQLAFilter, BaseBooleanFilter):
-    def apply(self, query, value, alias=None):
-        if value == '1':
-            return query.filter(Record.outer_request == True)  # noqa: E711
-        else:
-            return query.filter(Record.outer_request == False)  # noqa: E711
-
-    def operation(self):
-        return u'outer'
+@app.route("/", methods=['POST', 'GET'])
+def table():
+    if request.method == 'GET':
+        dict_table = get_table()
+        return render_template('table.html', dict_table=dict_table)
 
 
-class RecordModelView(SafeModelView):
-    column_list = ('file', 'ip_from', 'outer_request', 'country')
-    column_filters = (
-        FilterBySuccess(column=None, name='response OK'),
-        FilterOuter(column=None, name='Request type')
-    )
-
+@app.route('/<name>')
+def stat(name):
+    return render_template('country.html', dict_table=get_countries(str(name)))
 
 if __name__ == '__main__':
-    session = get_session('nginx', 'nginx', '192.168.10.78:5432', 'nginx_logs')
-    admin = Admin(app, name='microblog', template_mode='bootstrap3')
-    admin.add_view(ConfigModelView(Config, session))
-    admin.add_view(RecordModelView(Record, session))
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True)
