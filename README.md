@@ -47,3 +47,11 @@
         ```
         * * * * * cd </path/to/dir/where/to/store/update/logs> && </path/to/python> </path/to/update.py>
         ```
+
+###Commands for Django
+```
+python manage.py runserver
+python manage.py makemigrations stats
+python manage.py migrate
+python manage.py shell
+```
