@@ -1,18 +1,19 @@
 from django.http import Http404
 from django.shortcuts import render
+from django.views import generic
 
 from .models import Record
 
 
-def index(request):
-    latest_records = Record.objects.order_by('-time')[:5]
-    context = {'latest_records': latest_records}
-    return render(request, 'stats/index.html', context)
+class IndexView(generic.ListView):
+    template_name = 'stats/index.html'
+    context_object_name = 'latest_records'
+
+    def get_queryset(self):
+        """Return the last five published questions."""
+        return Record.objects.order_by('-time')[:5]
 
 
-def detail(request, id):
-    try:
-        record = Record.objects.get(id=id)
-    except Record.DoesNotExist:
-        raise Http404("Record does not exist")
-    return render(request, 'stats/detail.html', {'record': record})
+class DetailView(generic.DetailView):
+    model = Record
+    template_name = 'stats/detail.html'
