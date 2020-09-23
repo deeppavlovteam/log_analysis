@@ -5,7 +5,7 @@ from ipaddress import IPv4Address, IPv4Network
 from log_analyser.log_tools import GeoliteDbWrapper
 
 
-geolite_db_wrapper = GeoliteDbWrapper()
+#geolite_db_wrapper = GeoliteDbWrapper()
 
 
 def convert_str_to_datetime(row):
