@@ -21,5 +21,17 @@ class Record(models.Model):
     city = models.TextField(null=True)
     company = models.TextField(null=True)
 
+    gz_hash = models.TextField()
+
     def __str__(self):
         return f'{self.ip} {self.time} {self.file}'
+
+
+class Hash(models.Model):
+    filename = models.TextField()
+    hash = models.TextField()
+
+
+class File(models.Model):
+    name = models.TextField()
+    downloads_number = models.BigIntegerField()
