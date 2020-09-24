@@ -34,6 +34,8 @@ class Hash(models.Model):
 
 class File(models.Model):
     name = models.TextField()
+    def foo(self):
+        return 42
     downloads_number = models.BigIntegerField()
 
 

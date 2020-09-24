@@ -9,7 +9,13 @@ class RecordAdmin(admin.ModelAdmin):
     list_filter = ['outer_request']
 #    search_fields = ['ip', 'config']
 
+
+class FileAdmin(admin.ModelAdmin):
+    list_display = ('name', 'downloads_number', 'foo')
+    search_fields = ['name']
+
+
 admin.site.register(Record, RecordAdmin)
 admin.site.register(Hash)
-admin.site.register(File)
+admin.site.register(File, FileAdmin)
 admin.site.register(Config)
