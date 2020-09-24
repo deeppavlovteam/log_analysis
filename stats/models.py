@@ -6,16 +6,14 @@ from django.db import models
 
 
 class File(models.Model):
-    name = models.TextField()
-    def foo(self):
-        return self.record_set.count()
+    name = models.TextField(unique=True)
+    md5 = models.BooleanField()
 
 
 class Record(models.Model):
     ip = models.CharField(max_length=20)
     time = models.DateTimeField('request time')
     file = models.ForeignKey(File, on_delete=models.CASCADE)
-    md5 = models.BooleanField()
     config = models.TextField(null=True)
     response_code = models.PositiveIntegerField()
     bytes = models.BigIntegerField()

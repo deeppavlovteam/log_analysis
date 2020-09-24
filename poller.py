@@ -28,11 +28,10 @@ def add_gz_to_db(path_to_gz: Path):
         file = ''
         if file_match is not None:
             file = file_match.group(1)
-        md5 = file.endswith('.md5')
         if File.objects.filter(name=file).exists():
             file = File.objects.get(name=file)
         else:
-            file = File(name=file)
+            file = File(name=file, md5=file.endswith('.md5'))
             file.save()
         config_match = re.search(config_templ, request)
         config = ''
@@ -42,7 +41,6 @@ def add_gz_to_db(path_to_gz: Path):
             r = Record(ip=ip_from,
                        time=datetime.strptime(timestamp, '[%d/%b/%Y:%H:%M:%S %z]'),
                        file=file,
-                       md5=md5,
                        config=config,
                        response_code=int(response_code),
                        bytes=int(bytes),

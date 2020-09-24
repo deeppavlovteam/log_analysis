@@ -31,7 +31,6 @@ class OuterRequestFilter(SimpleListFilter):
         return queryset
 
 
-
 class RecordAdmin(admin.ModelAdmin):
     list_display = ('ip', 'file', 'config', 'outer_request')
 #    fields = ['file', 'time']
@@ -41,22 +40,27 @@ class RecordAdmin(admin.ModelAdmin):
 
 
 class FileAdmin(admin.ModelAdmin):
-    list_display = ('name', 'foo', 'foo1')
+    list_display = ('name', 'n_records')
     search_fields = ['name']
-    list_filter = (ResponseCodeFilter, OuterRequestFilter)
+    list_filter = (ResponseCodeFilter, OuterRequestFilter, 'md5')
+
     def get_queryset(self, request):
         qs = super(admin.ModelAdmin, self).get_queryset(request)
 
         default_filter = Q()
         for filter in self.list_filter:
+            if isinstance(filter, str):
+                continue
             val = request.GET.get(filter.parameter_name)
             if val is not None:
                 default_filter &= Q(**{f'record__{filter.parameter_name}': val})
 
-        return qs.annotate(foo1=Count('record', filter=default_filter))
-    def foo1(self, inst):
-        return inst.foo1
-    foo1.admin_order_field = 'foo1'
+        return qs.annotate(n_records=Count('record', filter=default_filter))
+
+    def n_records(self, inst):
+        return inst.n_records
+
+    n_records.admin_order_field = 'n_records'
 
 
 admin.site.register(Record, RecordAdmin)
