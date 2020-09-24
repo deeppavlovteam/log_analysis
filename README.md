@@ -50,6 +50,7 @@
 
 ###Commands for Django
 ```
+python manage.py createsuperuser
 python manage.py runserver
 python manage.py makemigrations stats
 python manage.py migrate

@@ -11,7 +11,7 @@ class RecordAdmin(admin.ModelAdmin):
 
 
 class FileAdmin(admin.ModelAdmin):
-    list_display = ('name', 'downloads_number', 'foo')
+    list_display = ('name', 'foo')
     search_fields = ['name']
 
 

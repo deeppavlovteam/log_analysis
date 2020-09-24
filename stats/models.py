@@ -5,10 +5,16 @@ from django.db import models
 from django.db import models
 
 
+class File(models.Model):
+    name = models.TextField()
+    def foo(self):
+        return self.record_set.count()
+
+
 class Record(models.Model):
     ip = models.CharField(max_length=20)
     time = models.DateTimeField('request time')
-    file = models.TextField()
+    file = models.ForeignKey(File, on_delete=models.CASCADE)
     md5 = models.BooleanField()
     config = models.TextField(null=True)
     response_code = models.PositiveIntegerField()
@@ -30,13 +36,6 @@ class Record(models.Model):
 class Hash(models.Model):
     filename = models.TextField()
     hash = models.TextField()
-
-
-class File(models.Model):
-    name = models.TextField()
-    def foo(self):
-        return 42
-    downloads_number = models.BigIntegerField()
 
 
 class Config(models.Model):
