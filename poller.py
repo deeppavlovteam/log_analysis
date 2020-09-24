@@ -1,12 +1,17 @@
+import json
 import re
 from datetime import datetime
 from pathlib import Path
 
-from log_analyser.log_dataframe import LogDataFrame
-from stats.models import Record, Hash, File
-from log_analyser.log_transformers import validate_outer_request
-from log_analyser.log_tools import get_file_md5_hash
+from deeppavlov.download import get_config_downloads
 from django.db.models import Count
+from git import Repo
+from packaging import version
+
+from log_analyser.log_dataframe import LogDataFrame
+from log_analyser.log_tools import get_file_md5_hash
+from log_analyser.log_transformers import validate_outer_request
+from stats.models import Record, Hash, File, Config
 
 
 def add_gz_to_db(path_to_gz: Path):
@@ -54,6 +59,52 @@ def update_files():
     stat = Record.objects.filter(response_code=200).values('file').annotate(total=Count('file')) #.order_by('total')
     new_files = [File(name=s['file'], downloads_number=s['total']) for s in stat]
     File.objects.bulk_create(new_files)
+
+
+def update_configs(conf_path: str, dp_version: str):
+    conf_path = Path(conf_path).resolve()
+    def get_files(path: Path, conf_type=None):
+        if path.is_dir():
+            for file in path.iterdir():
+                get_files(file, conf_type or file.name)
+        if path.suffix == '.json':
+            with open(str(path), 'r') as file:
+                data = json.loads(file.read())
+                try:
+                    files = [item[0].replace('http://files.deeppavlov.ai', '') for item in get_config_downloads(data)]
+                except FileNotFoundError as e:
+                    print(f'{dp_version}\t{path}\n{e}')
+                    return
+                if not files:
+                    return
+                candidate = Config(
+                    name=path.name.replace('.json', '').replace('-', '_'),
+                    type=conf_type,
+                    dp_version=dp_version,
+                    files=json.dumps(files)
+                )
+                add = True
+                for config in Config.objects.filter(name=candidate.name):
+                    if set(json.loads(config.files)) == set(files):
+                        if version.parse(config.dp_version) < version.parse(candidate.dp_version):
+                            config.dp_version = candidate.dp_version
+                            if config.type != candidate.type:
+                                config.type = candidate.type
+                            config.save()
+                        add = False
+                if add:
+                    candidate.save()
+
+    get_files(conf_path)
+
+
+def upd_deeppavlov():
+#    repo = Repo.clone_from('https://github.com/deepmipt/DeepPavlov', './DeepPavlov', branch='master')
+    repo = Repo('DeepPavlov')
+    tags = sorted([t.name for t in repo.tags if version.parse(t.name) >= version.parse('0.2.0')], key=version.parse)
+    for t in tags:
+        repo.git.checkout(t)
+        update_configs(conf_path='DeepPavlov/deeppavlov/configs', dp_version=t)
 
 
 def boo():

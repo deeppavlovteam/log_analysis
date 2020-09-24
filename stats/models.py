@@ -35,3 +35,10 @@ class Hash(models.Model):
 class File(models.Model):
     name = models.TextField()
     downloads_number = models.BigIntegerField()
+
+
+class Config(models.Model):
+    name = models.TextField()
+    type = models.TextField()
+    dp_version = models.TextField()
+    files = models.TextField()

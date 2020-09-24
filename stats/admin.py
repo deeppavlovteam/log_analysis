@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Record
+from .models import Record, Hash, File, Config
 
 
 class RecordAdmin(admin.ModelAdmin):
@@ -10,3 +10,6 @@ class RecordAdmin(admin.ModelAdmin):
 #    search_fields = ['ip', 'config']
 
 admin.site.register(Record, RecordAdmin)
+admin.site.register(Hash)
+admin.site.register(File)
+admin.site.register(Config)
