@@ -6,6 +6,7 @@ from .models import Record
 
 
 class IndexView(generic.ListView):
+    paginate_by = 2
     template_name = 'stats/index.html'
     context_object_name = 'latest_records'
 
