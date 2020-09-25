@@ -53,11 +53,12 @@ class ConfigNameAdmin(admin.ModelAdmin):
 
 
 class ConfigAdmin(admin.ModelAdmin):
-    list_display = ('type', 'name', 'dp_version', 'files')
+    list_display = ('type', 'name', 'dp_version', 'files', 'n_downloads')
+    list_filter = ['dp_version', 'type', ('type', MyDateFilter), ResponseCodeFilter, OuterRequestFilter]
 
 
 class FileAdmin(admin.ModelAdmin):
-    list_display = ('name', 'n_records')
+    list_display = ('name', 'n_records', 'configs')
     search_fields = ['name']
     list_filter = (ResponseCodeFilter, OuterRequestFilter, 'md5', ('name', MyDateFilter))
 
@@ -72,9 +73,9 @@ class FileAdmin(admin.ModelAdmin):
                 gte = request.GET.get('time__range__gte')
                 lte = request.GET.get('time__range__lte')
                 dic = {}
-                if gte is not None:
+                if gte is not None and gte != '':
                     dic.update({'record__time__gte': gte})
-                if lte is not None:
+                if lte is not None and lte != '':
                     dic.update({'record__time__lte': lte})
                 if dic:
                     default_filter &= Q(**dic)
