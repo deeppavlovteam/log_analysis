@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'rangefilter',
     'django_filters',
     'stats.apps.StatsConfig',
     'django.contrib.admin',
