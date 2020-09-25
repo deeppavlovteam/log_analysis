@@ -14,6 +14,10 @@ from log_analyser.log_transformers import validate_outer_request
 from stats.models import Record, Hash, File, Config, ConfigName
 
 
+file_buffer = {}
+config_buffer = {}
+
+
 def add_gz_to_db(path_to_gz: Path):
     hash = get_file_md5_hash(path_to_gz)
     ldf = LogDataFrame({'log_dataframe_columns':['a'], 'log_dir': '', 'pickle_file': '', 'hashes_file': ''})
@@ -25,23 +29,30 @@ def add_gz_to_db(path_to_gz: Path):
         file_templ = r'^(.+?)[\s\?]'
         config_templ = r'.+?[\?\&]config=(.+?)[\s\&]'
         file_match = re.search(file_templ, request)
-        file = ''
-        if file_match is not None:
-            file = file_match.group(1)
-        if File.objects.filter(name=file).exists():
-            file = File.objects.get(name=file)
-        else:
-            file = File(name=file, md5=file.endswith('.md5'))
-            file.save()
+        # Assuming that file_match is not None. If it is, we need to get error and look at data
+        file_name = file_match.group(1)
+        try:
+            file = file_buffer[file_name]
+        except KeyError:
+            try:
+                file = File.objects.get(name=file_name)
+            except File.DoesNotExist:
+                file = File(name=file_name, md5=file_name.endswith('.md5'))
+                file.save()
+            file_buffer[file_name] = file
         config_match = re.search(config_templ, request)
-        config = ''
+        config_name = ''
         if config_match is not None:
-            config = config_match.group(1)
-        if ConfigName.objects.filter(name=config).exists():
-            config = ConfigName.objects.get(name=config)
-        else:
-            config = ConfigName(name=config)
-            config.save()
+            config_name = config_match.group(1)
+        try:
+            config = config_buffer[config_name]
+        except KeyError:
+            try:
+                config =  ConfigName.objects.get(name=config_name)
+            except ConfigName.DoesNotExist:
+                config = ConfigName(name=config_name)
+                config.save()
+            config_buffer[config_name] = config
         try:
             r = Record(ip=ip_from,
                        time=datetime.strptime(timestamp, '[%d/%b/%Y:%H:%M:%S %z]'),
