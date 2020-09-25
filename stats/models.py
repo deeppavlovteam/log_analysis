@@ -10,11 +10,24 @@ class File(models.Model):
     md5 = models.BooleanField()
 
 
+class ConfigName(models.Model):
+    name = models.TextField(unique=True)
+    def __str__(self):
+        return self.name
+
+
+class Config(models.Model):
+    type = models.TextField()
+    name = models.ForeignKey(ConfigName, on_delete=models.CASCADE)
+    dp_version = models.TextField()
+    files = models.TextField()
+
+
 class Record(models.Model):
     ip = models.CharField(max_length=20)
     time = models.DateTimeField('request time')
     file = models.ForeignKey(File, on_delete=models.CASCADE)
-    config = models.TextField(null=True)
+    config = models.ForeignKey(ConfigName, on_delete=models.CASCADE)
     response_code = models.PositiveIntegerField()
     bytes = models.BigIntegerField()
     ref = models.TextField()
@@ -34,10 +47,3 @@ class Record(models.Model):
 class Hash(models.Model):
     filename = models.TextField()
     hash = models.TextField()
-
-
-class Config(models.Model):
-    name = models.TextField()
-    type = models.TextField()
-    dp_version = models.TextField()
-    files = models.TextField()

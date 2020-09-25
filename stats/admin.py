@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Record, Hash, File, Config
+from .models import Record, Hash, File, Config, ConfigName
 from django.db.models import Count, Q
 from django.contrib.admin import SimpleListFilter
 from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
@@ -48,6 +48,14 @@ class RecordAdmin(admin.ModelAdmin):
 #    search_fields = ['ip', 'config']
 
 
+class ConfigNameAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+
+
+class ConfigAdmin(admin.ModelAdmin):
+    list_display = ('type', 'name', 'dp_version', 'files')
+
+
 class FileAdmin(admin.ModelAdmin):
     list_display = ('name', 'n_records')
     search_fields = ['name']
@@ -58,7 +66,6 @@ class FileAdmin(admin.ModelAdmin):
 
         default_filter = Q()
         for filter in self.list_filter:
-            print(request.GET)
             if isinstance(filter, str):
                 continue
             elif isinstance(filter, tuple):
@@ -87,4 +94,5 @@ class FileAdmin(admin.ModelAdmin):
 admin.site.register(Record, RecordAdmin)
 admin.site.register(Hash)
 admin.site.register(File, FileAdmin)
-admin.site.register(Config)
+admin.site.register(Config, ConfigAdmin)
+admin.site.register(ConfigName, ConfigNameAdmin)

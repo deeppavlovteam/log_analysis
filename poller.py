@@ -11,7 +11,7 @@ from packaging import version
 from log_analyser.log_dataframe import LogDataFrame
 from log_analyser.log_tools import get_file_md5_hash
 from log_analyser.log_transformers import validate_outer_request
-from stats.models import Record, Hash, File, Config
+from stats.models import Record, Hash, File, Config, ConfigName
 
 
 def add_gz_to_db(path_to_gz: Path):
@@ -37,6 +37,11 @@ def add_gz_to_db(path_to_gz: Path):
         config = ''
         if config_match is not None:
             config = config_match.group(1)
+        if ConfigName.objects.filter(name=config).exists():
+            config = ConfigName.objects.get(name=config)
+        else:
+            config = ConfigName(name=config)
+            config.save()
         try:
             r = Record(ip=ip_from,
                        time=datetime.strptime(timestamp, '[%d/%b/%Y:%H:%M:%S %z]'),
@@ -81,23 +86,26 @@ def update_configs(conf_path: str, dp_version: str):
                     return
                 if not files:
                     return
-                candidate = Config(
-                    name=path.name.replace('.json', '').replace('-', '_'),
-                    type=conf_type,
-                    dp_version=dp_version,
-                    files=json.dumps(files)
-                )
-                add = True
-                for config in Config.objects.filter(name=candidate.name):
-                    if set(json.loads(config.files)) == set(files):
-                        if version.parse(config.dp_version) < version.parse(candidate.dp_version):
-                            config.dp_version = candidate.dp_version
-                            if config.type != candidate.type:
-                                config.type = candidate.type
-                            config.save()
-                        add = False
-                if add:
-                    candidate.save()
+                name = path.name.replace('.json', '').replace('-', '_')
+                if ConfigName.objects.filter(name=name).exists():
+                    conf_name = ConfigName.objects.get(name=name)
+                else:
+                    conf_name = ConfigName(name=name)
+                    conf_name.save()
+                if Config.objects.filter(name=conf_name).exists():
+                    for config in Config.objects.filter(name=conf_name):
+                        if set(json.loads(config.files)) == set(files):
+                            if version.parse(config.dp_version) < version.parse(dp_version):
+                                config.dp_version = dp_version
+                                if config.type != conf_type:
+                                    config.type = conf_type
+                                config.save()
+                else:
+                    new_conf = Config(type=conf_type,
+                                      name=conf_name,
+                                      dp_version=dp_version,
+                                      files=json.dumps(files))
+                    new_conf.save()
 
     get_files(conf_path)
 
