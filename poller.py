@@ -94,12 +94,21 @@ def update_configs(conf_path: str, dp_version: str):
                     conf_name.save()
                 if Config.objects.filter(name=conf_name).exists():
                     for config in Config.objects.filter(name=conf_name):
-                        if set(json.loads(config.files)) == set(files):
-                            if version.parse(config.dp_version) < version.parse(dp_version):
+                        if version.parse(config.dp_version) < version.parse(dp_version):
+                            if set(json.loads(config.files)) == set(files):
                                 config.dp_version = dp_version
-                                if config.type != conf_type:
-                                    config.type = conf_type
+                                config.type = conf_type
                                 config.save()
+                            else:
+                                for cof in Config.objects.filter(name=conf_name):
+                                    if set(json.loads(cof.files)) == set(files):
+                                        break
+                                else:
+                                    new_conf = Config(type=conf_type,
+                                                      name=conf_name,
+                                                      dp_version=dp_version,
+                                                      files=json.dumps(files))
+                                    new_conf.save()
                 else:
                     new_conf = Config(type=conf_type,
                                       name=conf_name,
