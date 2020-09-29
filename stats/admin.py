@@ -1,9 +1,9 @@
 from django.contrib import admin
+from django.contrib.admin import SimpleListFilter
+from django.db.models import Count, Q, OuterRef
+from rangefilter.filter import DateRangeFilter
 
 from .models import Record, Hash, File, Config, ConfigName
-from django.db.models import Count, Q
-from django.contrib.admin import SimpleListFilter
-from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
 
 
 class ResponseCodeFilter(SimpleListFilter):
@@ -44,7 +44,7 @@ class RecordAdmin(admin.ModelAdmin):
     list_display = ('ip', 'file', 'config', 'outer_request')
 #    fields = ['file', 'time']
     list_filter = ['outer_request']
-    search_fields = ['file__name']
+    search_fields = ['file__name', 'config__name']
 #    search_fields = ['ip', 'config']
 
 
@@ -55,6 +55,15 @@ class ConfigNameAdmin(admin.ModelAdmin):
 class ConfigAdmin(admin.ModelAdmin):
     list_display = ('type', 'name', 'dp_version', 'files', 'n_downloads')
     list_filter = ['dp_version', 'type', ('type', MyDateFilter), ResponseCodeFilter, OuterRequestFilter]
+
+    def get_queryset(self, request):
+        qs = super(admin.ModelAdmin, self).get_queryset(request)
+        sub = Record.objects.filter(config=OuterRef('name')).values('file').annotate(x=Count('file')).order_by('-x').values('x')[:1]
+        return qs.annotate(n_downloads=sub)
+
+    def n_downloads(self, inst):
+        return inst.n_downloads
+    n_downloads.admin_order_field = 'n_downloads'
 
 
 class FileAdmin(admin.ModelAdmin):

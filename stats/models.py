@@ -17,8 +17,6 @@ class Config(models.Model):
     name = models.ForeignKey(ConfigName, on_delete=models.CASCADE)
     dp_version = models.TextField()
     files = models.TextField()
-    def n_downloads(self):
-        return self.name.record_set.filter(response_code=200).values('file').annotate(x=Count('file')).aggregate(max=Max('x'))['max']
 
 
 class File(models.Model):
@@ -26,6 +24,8 @@ class File(models.Model):
     md5 = models.BooleanField()
     def configs(self):
         return [ConfigName.objects.get(id=id) for id in self.record_set.values_list('config', flat=True).distinct()]
+    def __str__(self):
+        return self.name
 
 
 class Record(models.Model):

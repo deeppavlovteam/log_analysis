@@ -48,7 +48,7 @@ def add_gz_to_db(path_to_gz: Path):
             config = config_buffer[config_name]
         except KeyError:
             try:
-                config =  ConfigName.objects.get(name=config_name)
+                config = ConfigName.objects.get(name=config_name)
             except ConfigName.DoesNotExist:
                 config = ConfigName(name=config_name)
                 config.save()
@@ -149,4 +149,4 @@ def boo():
         Record.objects.filter(gz_hash=hash).delete()
         print(a.name)
         add_gz_to_db(a)
-#    update_files()
+    upd_deeppavlov()
