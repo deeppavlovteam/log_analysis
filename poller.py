@@ -149,4 +149,4 @@ def boo():
         Record.objects.filter(gz_hash=hash).delete()
         print(a.name)
         add_gz_to_db(a)
-    upd_deeppavlov()
+    #upd_deeppavlov()

@@ -41,9 +41,9 @@ class MyDateFilter(DateRangeFilter):
 
 
 class RecordAdmin(admin.ModelAdmin):
-    list_display = ('ip', 'file', 'config', 'outer_request')
+    list_display = ('ip', 'file', 'config', 'outer_request', 'response_code')
 #    fields = ['file', 'time']
-    list_filter = ['outer_request']
+    list_filter = ['outer_request', 'response_code']
     search_fields = ['file__name', 'config__name']
 #    search_fields = ['ip', 'config']
 
@@ -58,7 +58,25 @@ class ConfigAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super(admin.ModelAdmin, self).get_queryset(request)
-        sub = Record.objects.filter(config=OuterRef('name')).values('file').annotate(x=Count('file')).order_by('-x').values('x')[:1]
+        sub = Record.objects.filter(config=OuterRef('name'))
+        for filter in self.list_filter:
+            if isinstance(filter, str):
+                continue
+            elif isinstance(filter, tuple):
+                gte = request.GET.get('time__range__gte')
+                lte = request.GET.get('time__range__lte')
+                dic = {}
+                if gte is not None and gte != '':
+                    dic.update({'time__gte': gte})
+                if lte is not None and lte != '':
+                    dic.update({'time__lte': lte})
+                if dic:
+                    sub = sub.filter(**dic)
+            else:
+                val = request.GET.get(filter.parameter_name)
+                if val is not None:
+                    sub = sub.filter(**{f'{filter.parameter_name}': val})
+        sub = sub.values('file').annotate(x=Count('file')).order_by('-x').values('x')[:1]
         return qs.annotate(n_downloads=sub)
 
     def n_downloads(self, inst):

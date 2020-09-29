@@ -25,7 +25,7 @@ SECRET_KEY = 'pidqjkob*l(nta4emr8^3^5m-9*#z=v0lpbgjlwkbuz$w+*qq('
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.10.78']
 
 
 # Application definition
