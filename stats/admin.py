@@ -32,6 +32,24 @@ class OuterRequestFilter(SimpleListFilter):
         return queryset
 
 
+class FileInConfigFilter(SimpleListFilter):
+    title = 'file in configs'
+    # !!! ТУТ здоровенный костыль: назвал параметр 'ip' чтобы он проходил проверку, но при этом это название параметра
+    # заставляет фильтровать records по ip. Чтобы этого не было, в getqueryset FileAdmin была добавлена проверка на
+    # имя параметра
+    parameter_name = 'ip'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('yes', 'DeepPavlov library'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == 'yes':
+            return queryset.filter(pk__in=list(Config.objects.values_list('files', flat=True).distinct()))
+        return queryset
+
+
 class MyDateFilter(DateRangeFilter):
     def __init__(self, field, request, params, model, model_admin, field_path):
         super(MyDateFilter, self).__init__('asdf', request, params, model, model_admin, 'time')
@@ -46,15 +64,23 @@ class RecordAdmin(admin.ModelAdmin):
     list_filter = ['outer_request', 'response_code']
     search_fields = ['file__name', 'config__name']
 #    search_fields = ['ip', 'config']
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class ConfigNameAdmin(admin.ModelAdmin):
     list_display = ('name',)
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 class ConfigAdmin(admin.ModelAdmin):
-    list_display = ('type', 'name', 'dp_version', 'files', 'n_downloads')
+    list_display = ('type', 'name', 'dp_version', 'n_downloads')
     list_filter = ['dp_version', 'type', ('type', MyDateFilter), ResponseCodeFilter, OuterRequestFilter]
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
     def get_queryset(self, request):
         qs = super(admin.ModelAdmin, self).get_queryset(request)
@@ -87,13 +113,17 @@ class ConfigAdmin(admin.ModelAdmin):
 class FileAdmin(admin.ModelAdmin):
     list_display = ('name', 'n_records', 'configs')
     search_fields = ['name']
-    list_filter = (ResponseCodeFilter, OuterRequestFilter, 'md5', ('name', MyDateFilter))
+    list_filter = (FileInConfigFilter, ResponseCodeFilter, OuterRequestFilter, 'md5', ('name', MyDateFilter))
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
     def get_queryset(self, request):
         qs = super(admin.ModelAdmin, self).get_queryset(request)
 
         default_filter = Q()
         for filter in self.list_filter:
+            print(isinstance(filter, FileInConfigFilter))
             if isinstance(filter, str):
                 continue
             elif isinstance(filter, tuple):
@@ -108,7 +138,7 @@ class FileAdmin(admin.ModelAdmin):
                     default_filter &= Q(**dic)
             else:
                 val = request.GET.get(filter.parameter_name)
-                if val is not None:
+                if val is not None and filter.parameter_name != 'ip':
                     default_filter &= Q(**{f'record__{filter.parameter_name}': val})
 
         return qs.annotate(n_records=Count('record', filter=default_filter))

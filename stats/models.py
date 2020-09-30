@@ -1,13 +1,17 @@
 from django.db import models
 
-# Create your models here.
-
-from django.db import models
-from django.db.models import Count, Max
-
 
 class ConfigName(models.Model):
     name = models.TextField(unique=True)
+    def __str__(self):
+        return self.name
+
+
+class File(models.Model):
+    name = models.TextField(unique=True)
+    md5 = models.BooleanField()
+    def configs(self):
+        return ', '.join(self.config_set.values_list('name__name', flat=True))
     def __str__(self):
         return self.name
 
@@ -16,23 +20,14 @@ class Config(models.Model):
     type = models.TextField()
     name = models.ForeignKey(ConfigName, on_delete=models.CASCADE)
     dp_version = models.TextField()
-    files = models.TextField()
-
-
-class File(models.Model):
-    name = models.TextField(unique=True)
-    md5 = models.BooleanField()
-    def configs(self):
-        return [ConfigName.objects.get(id=id) for id in self.record_set.values_list('config', flat=True).distinct()]
-    def __str__(self):
-        return self.name
+    files = models.ManyToManyField(File)
 
 
 class Record(models.Model):
     ip = models.CharField(max_length=20)
     time = models.DateTimeField('request time')
     file = models.ForeignKey(File, on_delete=models.CASCADE)
-    config = models.ForeignKey(ConfigName, on_delete=models.CASCADE)
+    config = models.ForeignKey(ConfigName, on_delete=models.CASCADE, null=True, blank=True)
     response_code = models.PositiveIntegerField()
     bytes = models.BigIntegerField()
     ref = models.TextField()

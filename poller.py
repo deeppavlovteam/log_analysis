@@ -41,18 +41,18 @@ def add_gz_to_db(path_to_gz: Path):
                 file.save()
             file_buffer[file_name] = file
         config_match = re.search(config_templ, request)
-        config_name = ''
+        config = None
         if config_match is not None:
             config_name = config_match.group(1)
-        try:
-            config = config_buffer[config_name]
-        except KeyError:
             try:
-                config = ConfigName.objects.get(name=config_name)
-            except ConfigName.DoesNotExist:
-                config = ConfigName(name=config_name)
-                config.save()
-            config_buffer[config_name] = config
+                config = config_buffer[config_name]
+            except KeyError:
+                try:
+                    config = ConfigName.objects.get(name=config_name)
+                except ConfigName.DoesNotExist:
+                    config = ConfigName(name=config_name)
+                    config.save()
+                config_buffer[config_name] = config
         try:
             r = Record(ip=ip_from,
                        time=datetime.strptime(timestamp, '[%d/%b/%Y:%H:%M:%S %z]'),
@@ -106,26 +106,38 @@ def update_configs(conf_path: str, dp_version: str):
                 if Config.objects.filter(name=conf_name).exists():
                     for config in Config.objects.filter(name=conf_name):
                         if version.parse(config.dp_version) < version.parse(dp_version):
-                            if set(json.loads(config.files)) == set(files):
+                            if set(config.files.values_list('name', flat=True)) == set(files):
                                 config.dp_version = dp_version
                                 config.type = conf_type
                                 config.save()
                             else:
                                 for cof in Config.objects.filter(name=conf_name):
-                                    if set(json.loads(cof.files)) == set(files):
+                                    if set(cof.files.values_list('name', flat=True)) == set(files):
                                         break
                                 else:
                                     new_conf = Config(type=conf_type,
                                                       name=conf_name,
-                                                      dp_version=dp_version,
-                                                      files=json.dumps(files))
+                                                      dp_version=dp_version)
                                     new_conf.save()
+                                    for file in files:
+                                        try:
+                                            fil = File.objects.get(name=file)
+                                        except File.DoesNotExist:
+                                            fil = File(name=file, md5=file.endswith('.md5'))
+                                            fil.save()
+                                        new_conf.files.add(fil)
                 else:
                     new_conf = Config(type=conf_type,
                                       name=conf_name,
-                                      dp_version=dp_version,
-                                      files=json.dumps(files))
+                                      dp_version=dp_version)
                     new_conf.save()
+                    for file in files:
+                        try:
+                            fil = File.objects.get(name=file)
+                        except File.DoesNotExist:
+                            fil = File(name=file, md5=file.endswith('.md5'))
+                            fil.save()
+                        new_conf.files.add(fil)
 
     get_files(conf_path)
 
@@ -140,7 +152,9 @@ def upd_deeppavlov():
 
 
 def boo():
-    access = [p for p in Path('/home/ignatov/log_stuff/data/nginx/').resolve().glob('files-access.log*.gz')]
+    from time import time
+    start = time()
+    access = [p for p in Path('/home/ignatov/log_stuff/data/nginx/').resolve().glob('files-access.log*.gz')][:5]
     for a in access:
         hash = get_file_md5_hash(a)
         if Hash.objects.filter(hash=hash).exists():
@@ -149,4 +163,5 @@ def boo():
         Record.objects.filter(gz_hash=hash).delete()
         print(a.name)
         add_gz_to_db(a)
+    print(time()-start)
     #upd_deeppavlov()
