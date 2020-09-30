@@ -154,7 +154,7 @@ def upd_deeppavlov():
 def boo():
     from time import time
     start = time()
-    access = [p for p in Path('/home/ignatov/log_stuff/data/nginx/').resolve().glob('files-access.log*.gz')][:5]
+    access = sorted([p for p in Path('/home/ignatov/log_stuff/data/nginx/').resolve().glob('files-access.log*.gz')])
     for a in access:
         hash = get_file_md5_hash(a)
         if Hash.objects.filter(hash=hash).exists():

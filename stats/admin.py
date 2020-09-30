@@ -123,7 +123,6 @@ class FileAdmin(admin.ModelAdmin):
 
         default_filter = Q()
         for filter in self.list_filter:
-            print(isinstance(filter, FileInConfigFilter))
             if isinstance(filter, str):
                 continue
             elif isinstance(filter, tuple):
