@@ -20,6 +20,20 @@ class ResponseCodeFilter(SimpleListFilter):
         return queryset
 
 
+class Md5Filter(SimpleListFilter):
+    title = 'md5'
+    parameter_name = 'md5'
+
+    def lookups(self, request, model_admin):
+        return (
+            (True, 'only md5'),
+            (False, 'not md5')
+        )
+
+    def queryset(self, request, queryset):
+        return queryset
+
+
 class OuterRequestFilter(SimpleListFilter):
     title = 'request type'
     parameter_name = 'outer_request'
@@ -77,8 +91,8 @@ class ConfigNameAdmin(admin.ModelAdmin):
 
 
 class ConfigAdmin(admin.ModelAdmin):
-    list_display = ('name', 'type', 'dp_version', 'n_downloads', 'files_display')
-    list_filter = [('type', MyDateFilter), ResponseCodeFilter, OuterRequestFilter, 'dp_version', 'type']
+    list_display = ('name', 'type', 'dp_version', 'n_downloads', 'ips', 'files_display')
+    list_filter = [Md5Filter, ('type', MyDateFilter), ResponseCodeFilter, OuterRequestFilter, 'dp_version', 'type']
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -101,14 +115,22 @@ class ConfigAdmin(admin.ModelAdmin):
                     sub = sub.filter(**dic)
             else:
                 val = request.GET.get(filter.parameter_name)
-                if val is not None:
-                    sub = sub.filter(**{f'{filter.parameter_name}': val})
-        sub = sub.values('file').annotate(x=Count('file')).order_by('-x').values('x')[:1]
-        return qs.annotate(n_downloads=Coalesce(sub, 0))
+                if filter.parameter_name == 'md5' and val is not None:
+                    sub = sub.filter(file__md5=val)
+                else:
+                    if val is not None:
+                        sub = sub.filter(**{f'{filter.parameter_name}': val})
+        n_downloads = sub.values('file').annotate(x=Count('file')).order_by('-x').values('x')[:1]
+        unique_ips = sub.values('ip', 'file').annotate(y=Count('ip')).order_by('-y').values('y')[:1]
+        return qs.annotate(n_downloads=Coalesce(n_downloads, 0), ips=Coalesce(unique_ips, 0))
 
     def n_downloads(self, inst):
         return inst.n_downloads
     n_downloads.admin_order_field = 'n_downloads'
+
+    def ips(self, inst):
+        return inst.ips
+    ips.admin_order_field = 'ips'
 
 
 class FileAdmin(admin.ModelAdmin):
