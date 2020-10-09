@@ -27,7 +27,7 @@ class Md5Filter(SimpleListFilter):
     def lookups(self, request, model_admin):
         return (
             (True, 'only md5'),
-            (False, 'not md5')
+            (False, 'ignore md5')
         )
 
     def queryset(self, request, queryset):
