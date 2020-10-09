@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.functions import Concat
 
 
 class ConfigName(models.Model):
@@ -11,7 +12,7 @@ class File(models.Model):
     name = models.TextField(unique=True)
     md5 = models.BooleanField()
     def configs(self):
-        return ', '.join(self.config_set.values_list('name__name', flat=True))
+        return ', '.join(self.config_set.annotate(config_ver=Concat('name__name', models.Value(' ('), 'dp_version', models.Value(')'), output_field=models.CharField())).values_list('config_ver', flat=True))
     def __str__(self):
         return self.name
 
@@ -21,7 +22,8 @@ class Config(models.Model):
     name = models.ForeignKey(ConfigName, on_delete=models.CASCADE)
     dp_version = models.TextField()
     files = models.ManyToManyField(File)
-
+    def files_display(self):
+        return ', '.join([f.name for f in self.files.all()])
 
 class Record(models.Model):
     ip = models.CharField(max_length=20)

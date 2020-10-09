@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
 from django.db.models import Count, Q, OuterRef
+from django.db.models.functions import Coalesce
 from rangefilter.filter import DateRangeFilter
 
 from .models import Record, Hash, File, Config, ConfigName
@@ -59,7 +60,7 @@ class MyDateFilter(DateRangeFilter):
 
 
 class RecordAdmin(admin.ModelAdmin):
-    list_display = ('ip', 'file', 'config', 'outer_request', 'response_code')
+    list_display = ('ip', 'file', 'config', 'outer_request', 'response_code', 'time')
 #    fields = ['file', 'time']
     list_filter = ['outer_request', 'response_code']
     search_fields = ['file__name', 'config__name']
@@ -76,8 +77,8 @@ class ConfigNameAdmin(admin.ModelAdmin):
 
 
 class ConfigAdmin(admin.ModelAdmin):
-    list_display = ('type', 'name', 'dp_version', 'n_downloads')
-    list_filter = ['dp_version', 'type', ('type', MyDateFilter), ResponseCodeFilter, OuterRequestFilter]
+    list_display = ('name', 'type', 'dp_version', 'n_downloads', 'files_display')
+    list_filter = [('type', MyDateFilter), ResponseCodeFilter, OuterRequestFilter, 'dp_version', 'type']
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -103,7 +104,7 @@ class ConfigAdmin(admin.ModelAdmin):
                 if val is not None:
                     sub = sub.filter(**{f'{filter.parameter_name}': val})
         sub = sub.values('file').annotate(x=Count('file')).order_by('-x').values('x')[:1]
-        return qs.annotate(n_downloads=sub)
+        return qs.annotate(n_downloads=Coalesce(sub, 0))
 
     def n_downloads(self, inst):
         return inst.n_downloads
