@@ -91,7 +91,7 @@ class ConfigNameAdmin(admin.ModelAdmin):
 
 
 class ConfigAdmin(admin.ModelAdmin):
-    list_display = ('name', 'type', 'dp_version', 'n_downloads', 'ips', 'unique_ip', 'files_display')
+    list_display = ('name', 'type', 'category', 'dp_version', 'n_downloads', 'ips', 'unique_ip', 'files_display')
     list_filter = [Md5Filter, ('type', MyDateFilter), ResponseCodeFilter, OuterRequestFilter, 'dp_version', 'type']
 
     def has_delete_permission(self, request, obj=None):

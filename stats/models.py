@@ -19,6 +19,7 @@ class File(models.Model):
 
 class Config(models.Model):
     type = models.TextField()
+    category = models.TextField(null=True)
     name = models.ForeignKey(ConfigName, on_delete=models.CASCADE)
     dp_version = models.TextField()
     files = models.ManyToManyField(File)
