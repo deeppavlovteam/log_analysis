@@ -57,6 +57,11 @@ python manage.py migrate
 python manage.py shell
 ```
 
+
 updating example:
 select * from stats_config, stats_configname where stats_config.name_id = stats_configname.id and name in ('kbqa_cq', 'kbqa_cq_bert_ranker', 'kbqa_cq_mt_bert', 'kbqa_cq_online', 'kbqa_cq_online_mt_bert', 'kbqa_cq_rus', 'kbqa_cq_sep', 'kbqa_mt_bert_train');
 update stats_config set category = 'KBQA' from stats_configname where stats_config.name_id = stats_configname.id and name in ('kbqa_cq', 'kbqa_cq_bert_ranker', 'kbqa_cq_mt_bert', 'kbqa_cq_online', 'kbqa_cq_online_mt_bert', 'kbqa_cq_rus', 'kbqa_cq_sep', 'kbqa_mt_bert_train');
+
+cd log_stuff/data/nginx/
+scp ignatov@share.ipavlov.mipt.ru:/var/log/nginx/* ./
+

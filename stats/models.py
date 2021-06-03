@@ -28,6 +28,7 @@ class Config(models.Model):
     def unique_ip(self):
         return self.name.record_set.filter(response_code=200, outer_request=True).values('ip').distinct().count()
 
+
 class Record(models.Model):
     ip = models.CharField(max_length=20)
     time = models.DateTimeField('request time')
@@ -44,6 +45,11 @@ class Record(models.Model):
     company = models.TextField(null=True)
 
     gz_hash = models.TextField()
+
+    token = models.TextField(null=True)
+    session_token = models.TextField(null=True)
+    file_number = models.PositiveIntegerField(null=True)
+    dp_version = models.TextField(null=True)
 
     def __str__(self):
         return f'{self.ip} {self.time} {self.file}'
