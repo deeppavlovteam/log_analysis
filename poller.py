@@ -22,10 +22,14 @@ def add_gz_to_db(path_to_gz: Path):
     hash = get_file_md5_hash(path_to_gz)
     ldf = LogDataFrame({'log_dataframe_columns':['a'], 'log_dir': '', 'pickle_file': '', 'hashes_file': ''})
     lines = ldf._read_file(path_to_gz)
-    template = r'^(\S+?)\s(\S+?)\s(\S+?)\s(\[.+?\])\s"GET\s(.+?)"\s(.+?)\s(.+?)\s(".*?")\s(".*?")\s(".+?")$'
+    template = r'^(\S+?)\s(\S+?)\s(\S+?)\s(\[.+?\])\s"GET\s(.+?)"\s(.+?)\s(.+?)\s(".*?")\s(".*?")\s(".+?")(.*?)$'
     parsed = re.findall(template, lines, flags=re.MULTILINE)
     creating = []
-    for ip_from, domain, _1, timestamp, request, response_code, bytes, ref, app, _2 in parsed:
+    for ip_from, domain, _1, timestamp, request, response_code, bytes, ref, app, _2, stat_data in parsed:
+        # from 2 april 2021 logs contain token, from april-may 2021 (see releases) logs also contain download
+        # session id, file id in download session (countdown) and library version
+
+        token, session_id, file_id, dp_version = [val if val != '-' else None for val in (stat_data.split() + ['-'] * 4)[:4]]
         file_templ = r'^(.+?)[\s\?]'
         config_templ = r'.+?[\?\&]config=(.+?)[\s\&]'
         file_match = re.search(file_templ, request)
@@ -64,7 +68,11 @@ def add_gz_to_db(path_to_gz: Path):
                        app=app,
                        forwarded_for=_2,
                        outer_request=validate_outer_request({'ip_from': ip_from}),
-                       gz_hash=hash)
+                       gz_hash=hash,
+                       token=token,
+                       session_token=session_id,
+                       file_number=file_id,
+                       dp_version=dp_version)
         except ValueError as e:
             print(ip_from, domain, _1, timestamp, request, response_code, bytes, ref, app, _2)
             raise e

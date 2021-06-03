@@ -56,3 +56,6 @@ python manage.py makemigrations stats
 python manage.py migrate
 python manage.py shell
 ```
+
+cd log_stuff/data/nginx/
+scp ignatov@share.ipavlov.mipt.ru:/var/log/nginx/* ./
