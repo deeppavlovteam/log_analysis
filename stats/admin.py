@@ -1,6 +1,8 @@
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
 from django.db.models import Count, Q, OuterRef
+from django.db.models import IntegerField
+from django.db.models.expressions import Subquery
 from django.db.models.functions import Coalesce
 from rangefilter.filter import DateRangeFilter
 
@@ -91,7 +93,7 @@ class ConfigNameAdmin(admin.ModelAdmin):
 
 
 class ConfigAdmin(admin.ModelAdmin):
-    list_display = ('name', 'type', 'category', 'dp_version', 'n_downloads', 'ips', 'unique_ip', 'files_display')
+    list_display = ('name', 'type', 'category', 'dp_version', 'n_downloads',  'unique_ip', 'files_display')
     list_filter = [Md5Filter, ('type', MyDateFilter), ResponseCodeFilter, OuterRequestFilter, 'dp_version', 'type']
 
     def has_delete_permission(self, request, obj=None):
@@ -121,16 +123,23 @@ class ConfigAdmin(admin.ModelAdmin):
                     if val is not None:
                         sub = sub.filter(**{f'{filter.parameter_name}': val})
         n_downloads = sub.values('file').annotate(x=Count('file')).order_by('-x').values('x')[:1]
-        unique_ips = sub.values('ip', 'file').annotate(y=Count('ip')).order_by('-y').values('y')[:1]
-        return qs.annotate(n_downloads=Coalesce(n_downloads, 0), ips=Coalesce(unique_ips, 0))
+        unique_ip = sub.values('ip').annotate(z=Count('ip', distinct=True)).values('z')
+
+        class SQCount(Subquery):
+            template = "(SELECT count(*) FROM (%(subquery)s) _count)"
+            output_field = IntegerField()
+
+        qs = qs.annotate(n_downloads=Coalesce(n_downloads, 0)).annotate(unique_ip=SQCount(unique_ip))
+
+        return qs
 
     def n_downloads(self, inst):
         return inst.n_downloads
     n_downloads.admin_order_field = 'n_downloads'
 
-    def ips(self, inst):
-        return inst.ips
-    ips.admin_order_field = 'ips'
+    def unique_ip(self, inst):
+        return inst.unique_ip
+    unique_ip.admin_order_field = 'unique_ip'
 
 
 class FileAdmin(admin.ModelAdmin):

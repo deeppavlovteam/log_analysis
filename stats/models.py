@@ -25,8 +25,6 @@ class Config(models.Model):
     files = models.ManyToManyField(File)
     def files_display(self):
         return ', '.join([f.name for f in self.files.all()])
-    def unique_ip(self):
-        return self.name.record_set.filter(response_code=200, outer_request=True).values('ip').distinct().count()
 
 
 class Record(models.Model):

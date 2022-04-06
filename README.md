@@ -64,4 +64,3 @@ update stats_config set category = 'KBQA' from stats_configname where stats_conf
 
 cd log_stuff/data/nginx/
 scp ignatov@share.ipavlov.mipt.ru:/var/log/nginx/* ./
-
