@@ -1,5 +1,5 @@
 #!/bin/bash
-rm db.sqlite3 stats/migrations/*.py
+rm -r stats/migrations
 . venv/bin/activate
 python manage.py makemigrations stats
 python manage.py migrate

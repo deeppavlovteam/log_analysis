@@ -1,0 +1,17 @@
+version: '3.7'
+services:
+  db:
+    image: postgres:12.11
+    environment:
+      - POSTGRES_PASSWORD=stat
+      - POSTGRES_USER=stat
+      - POSTGRES_DB=django_db
+    ports:
+      - 5432:5432
+  analytics:
+    build:
+      context: .
+    volumes:
+      - /home/ignatov/Desktop/log_data:/data
+      - /home/ignatov/dev/log_analysis:/app
+    command: tail -f /dev/null

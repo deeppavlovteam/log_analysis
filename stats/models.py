@@ -27,8 +27,21 @@ class Config(models.Model):
         return ', '.join([f.name for f in self.files.all()])
 
 
-class Record(models.Model):
+class IP(models.Model):
     ip = models.CharField(max_length=20)
+    outer_request = models.BooleanField()
+    country = models.TextField(null=True)
+    city = models.TextField(null=True)
+    company = models.TextField(null=True)
+
+
+class Hash(models.Model):
+    filename = models.TextField()
+    hash = models.TextField()
+
+
+class Record(models.Model):
+    ip = models.ForeignKey(IP,  on_delete=models.CASCADE)
     time = models.DateTimeField('request time')
     file = models.ForeignKey(File, on_delete=models.CASCADE)
     config = models.ForeignKey(ConfigName, on_delete=models.CASCADE, null=True, blank=True)
@@ -37,12 +50,8 @@ class Record(models.Model):
     ref = models.TextField()
     app = models.TextField()
     forwarded_for = models.TextField()
-    outer_request = models.BooleanField()
-    country = models.TextField(null=True)
-    city = models.TextField(null=True)
-    company = models.TextField(null=True)
 
-    gz_hash = models.TextField()
+    gz_hash = models.ForeignKey(Hash, on_delete=models.CASCADE)
 
     token = models.TextField(null=True)
     session_token = models.TextField(null=True)
@@ -51,8 +60,3 @@ class Record(models.Model):
 
     def __str__(self):
         return f'{self.ip} {self.time} {self.file}'
-
-
-class Hash(models.Model):
-    filename = models.TextField()
-    hash = models.TextField()
