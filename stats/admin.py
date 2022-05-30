@@ -76,9 +76,9 @@ class MyDateFilter(DateRangeFilter):
 
 
 class RecordAdmin(admin.ModelAdmin):
-    list_display = ('ip', 'file', 'config', 'outer_request', 'response_code', 'time')
+    list_display = ('ip', 'file', 'config', 'response_code', 'time')
 #    fields = ['file', 'time']
-    list_filter = ['outer_request', 'response_code']
+    list_filter = ['response_code']
     search_fields = ['file__name', 'config__name']
 #    search_fields = ['ip', 'config']
     def has_delete_permission(self, request, obj=None):

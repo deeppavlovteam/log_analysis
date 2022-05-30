@@ -4,4 +4,3 @@ rm -r stats/migrations
 python manage.py makemigrations stats
 python manage.py migrate
 python manage.py createsuperuser
-python manage.py shell

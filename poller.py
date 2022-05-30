@@ -2,17 +2,18 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
+from shutil import rmtree
 
 from deeppavlov.download import get_config_downloads
 from django.db.models import Count
 from git import Repo
 from packaging import version
+from tqdm import tqdm
 
 from log_analyser.log_dataframe import LogDataFrame
 from log_analyser.log_tools import get_file_md5_hash
 from log_analyser.log_transformers import validate_outer_request
 from stats.models import Record, Hash, File, Config, ConfigName
-
 
 file_buffer = {}
 config_buffer = {}
@@ -151,19 +152,20 @@ def update_configs(conf_path: str, dp_version: str):
 
 
 def upd_deeppavlov():
-#    repo = Repo.clone_from('https://github.com/deepmipt/DeepPavlov', './DeepPavlov', branch='master')
-    repo = Repo('DeepPavlov')
+    repo_dir = '/tmp/DeepPavlov'
+    repo = Repo.clone_from('https://github.com/deepmipt/DeepPavlov', repo_dir, branch='master')
     tags = sorted([t.name for t in repo.tags if version.parse(t.name) >= version.parse('0.2.0')], key=version.parse)
-    for t in tags:
+    for t in tqdm(tags):
         repo.git.checkout(t)
         update_configs(conf_path='DeepPavlov/deeppavlov/configs', dp_version=t)
+    rmtree(repo_dir)
 
 
 def boo():
     from time import time
     start = time()
     access = sorted([p for p in Path('/home/ignatov/log_stuff/data/nginx/').resolve().glob('files-access.log*.gz')])
-    for a in access:
+    for a in tqdm(access):
         hash = get_file_md5_hash(a)
         if Hash.objects.filter(hash=hash).exists():
             print('skipping file')

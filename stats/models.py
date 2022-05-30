@@ -51,7 +51,7 @@ class Record(models.Model):
     app = models.TextField()
     forwarded_for = models.TextField()
 
-    gz_hash = models.ForeignKey(Hash, on_delete=models.CASCADE)
+    gz_hash = models.TextField()
 
     token = models.TextField(null=True)
     session_token = models.TextField(null=True)
