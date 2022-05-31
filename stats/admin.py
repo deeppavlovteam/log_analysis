@@ -94,7 +94,7 @@ class ConfigNameAdmin(admin.ModelAdmin):
 
 class ConfigAdmin(admin.ModelAdmin):
     list_display = ('name', 'type', 'category', 'dp_version', 'n_downloads',  'unique_ip', 'files_display')
-    list_filter = [Md5Filter, ('type', MyDateFilter), ResponseCodeFilter, OuterRequestFilter, 'dp_version', 'type']
+    list_filter = [Md5Filter, ('type', MyDateFilter), ResponseCodeFilter, 'dp_version', 'type']
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -145,7 +145,7 @@ class ConfigAdmin(admin.ModelAdmin):
 class FileAdmin(admin.ModelAdmin):
     list_display = ('name', 'n_records', 'configs')
     search_fields = ['name']
-    list_filter = (FileInConfigFilter, ResponseCodeFilter, OuterRequestFilter, 'md5', ('name', MyDateFilter))
+    list_filter = (FileInConfigFilter, ResponseCodeFilter, 'md5', ('name', MyDateFilter))
 
     def has_delete_permission(self, request, obj=None):
         return False

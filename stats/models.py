@@ -29,7 +29,7 @@ class Config(models.Model):
 
 class IP(models.Model):
     ip = models.CharField(max_length=20)
-    outer_request = models.BooleanField()
+    # outer_request = models.BooleanField()
     country = models.TextField(null=True)
     city = models.TextField(null=True)
     company = models.TextField(null=True)

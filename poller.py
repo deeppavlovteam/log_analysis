@@ -50,6 +50,8 @@ def add_gz_to_db(path_to_gz: Path):
     parsed = re.findall(template, lines, flags=re.MULTILINE)
     creating = []
     for ip_from, domain, _1, timestamp, request, response_code, bytes, ref, app, _2, stat_data in parsed:
+        if validate_outer_request({'ip_from': ip_from}) is False:
+            continue
         # from 2 april 2021 logs contain token, from april-may 2021 (see releases) logs also contain download
         # session id, file id in download session (countdown) and library version
 
@@ -89,7 +91,7 @@ def add_gz_to_db(path_to_gz: Path):
             except IP.DoesNotExist:
                 contry, city, company = get_location(ip_from)
                 ip = IP(ip=ip_from,
-                        outer_request=validate_outer_request({'ip_from': ip_from}),
+                        # outer_request=validate_outer_request({'ip_from': ip_from}),
                         country=contry,
                         city=city,
                         company=company)
