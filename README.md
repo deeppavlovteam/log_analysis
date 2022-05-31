@@ -1,6 +1,6 @@
 # TODO
 - return upd_database to geo wrapper
-- add colab region distinction
+- add colab region distinction, add autoupdate from https://www.gstatic.com/ipranges/cloud.json
 
 ### Create db
 
@@ -20,7 +20,12 @@ python manage.py shell -c 'from poller import upd_deeppavlov; upd_deeppavlov()'
 ### Update data
 
 ```commandline
-python manage.py shell -c 'from poller import boo; boo()'
+cd share
+rsync -a --ignore-existing ignatov@share.ipavlov.mipt.ru:/var/log/nginx/ .
+cd ../hetzner
+rsync -a --ignore-existing root@178.63.27.41:/var/log/nginx/ .
+python manage.py shell -c 'from poller import boo; boo("share")'
+python manage.py shell -c 'from poller import boo; boo("hetzner")'
 ```
 
 ### Start server

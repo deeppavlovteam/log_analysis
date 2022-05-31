@@ -54,7 +54,11 @@ def add_gz_to_db(path_to_gz: Path):
             continue
         # from 2 april 2021 logs contain token, from april-may 2021 (see releases) logs also contain download
         # session id, file id in download session (countdown) and library version
-
+        if stat_data.startswith('  '):
+            splited = stat_data.split()
+            assert len(splited) == 5
+            assert str(int(splited[1])) == splited[1]
+            stat_data = '-' + stat_data
         token, session_id, file_id, dp_version = [val if val != '-' else None for val in (stat_data.split() + ['-'] * 4)[:4]]
         file_templ = r'^(.+?)[\s\?]'
         config_templ = r'.+?[\?\&]config=(.+?)[\s\&]'
@@ -199,10 +203,15 @@ def upd_deeppavlov():
     rmtree(repo_dir)
 
 
-def boo():
+def boo(source: str):
     from time import time
     start = time()
-    access = sorted([p for p in Path('/data/share/').resolve().glob('files-access.log*.gz')])
+    if source == 'share':
+        access = sorted([p for p in Path('/data/share/').resolve().glob('files-access.log*.gz')])
+    elif source == 'hetzner':
+        access = sorted([p for p in Path('/data/hetzner/').resolve().glob('files-access.log*.gz')])
+    else:
+        raise ValueError(f'Wrong source {source}')
     for a in tqdm(access):
         hash = get_file_md5_hash(a)
         if Hash.objects.filter(hash=hash).exists():
