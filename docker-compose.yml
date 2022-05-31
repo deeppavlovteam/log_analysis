@@ -15,3 +15,5 @@ services:
       - /home/ignatov/Desktop/log_data:/data
       - /home/ignatov/dev/log_analysis:/app
     command: tail -f /dev/null
+    ports:
+      - 7050:7050

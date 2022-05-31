@@ -11,12 +11,35 @@ from packaging import version
 from tqdm import tqdm
 
 from log_analyser.log_dataframe import LogDataFrame
+from log_analyser.log_tools import GeoliteDbWrapper, ColabWrapper
 from log_analyser.log_tools import get_file_md5_hash
 from log_analyser.log_transformers import validate_outer_request
-from stats.models import Record, Hash, File, Config, ConfigName
+from stats.models import Record, Hash, File, Config, ConfigName, IP
 
 file_buffer = {}
 config_buffer = {}
+ip_buffer = {}
+
+geolite_db_wrapper = GeoliteDbWrapper(db_path='/data/legacy/GeoLite2-City.mmdb',
+                                      hash_path='/data/legacy/GeoLite2-City.mmdb.md5')
+colab_wrapper = ColabWrapper('/data/legacy/cloud.json')
+
+
+def get_location(ip_from: str):
+    ip_info = geolite_db_wrapper.get_ip_info(ip_from)
+    country, city, company = None, None, None
+    if isinstance(ip_info, dict):
+        try:
+            country = ip_info['country']['names']['en']
+        except KeyError:
+            pass
+        try:
+            city = ip_info['city']['names']['en']
+        except KeyError:
+            pass
+    if colab_wrapper(ip_from):
+        company = 'Google Colab'
+    return country, city, company
 
 
 def add_gz_to_db(path_to_gz: Path):
@@ -59,7 +82,21 @@ def add_gz_to_db(path_to_gz: Path):
                     config.save()
                 config_buffer[config_name] = config
         try:
-            r = Record(ip=ip_from,
+            ip = ip_buffer[ip_from]
+        except KeyError:
+            try:
+                ip = IP.objects.get(ip=ip_from)
+            except IP.DoesNotExist:
+                contry, city, company = get_location(ip_from)
+                ip = IP(ip=ip_from,
+                        outer_request=validate_outer_request({'ip_from': ip_from}),
+                        country=contry,
+                        city=city,
+                        company=company)
+                ip.save()
+                ip_buffer[ip_from] = ip
+        try:
+            r = Record(ip=ip,
                        time=datetime.strptime(timestamp, '[%d/%b/%Y:%H:%M:%S %z]'),
                        file=file,
                        config=config,
@@ -68,7 +105,6 @@ def add_gz_to_db(path_to_gz: Path):
                        ref=ref,
                        app=app,
                        forwarded_for=_2,
-                       outer_request=validate_outer_request({'ip_from': ip_from}),
                        gz_hash=hash,
                        token=token,
                        session_token=session_id,
@@ -157,14 +193,14 @@ def upd_deeppavlov():
     tags = sorted([t.name for t in repo.tags if version.parse(t.name) >= version.parse('0.2.0')], key=version.parse)
     for t in tqdm(tags):
         repo.git.checkout(t)
-        update_configs(conf_path='DeepPavlov/deeppavlov/configs', dp_version=t)
+        update_configs(conf_path=f'{repo_dir}/deeppavlov/configs', dp_version=t)
     rmtree(repo_dir)
 
 
 def boo():
     from time import time
     start = time()
-    access = sorted([p for p in Path('/home/ignatov/log_stuff/data/nginx/').resolve().glob('files-access.log*.gz')])
+    access = sorted([p for p in Path('/data/share/').resolve().glob('files-access.log*.gz')])
     for a in tqdm(access):
         hash = get_file_md5_hash(a)
         if Hash.objects.filter(hash=hash).exists():
