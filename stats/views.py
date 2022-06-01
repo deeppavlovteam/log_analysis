@@ -29,9 +29,17 @@ class StatsChartView(TemplateView):
         config_id = kwargs.pop('config_id')
         conf = Config.objects.get(id=config_id)
         records = Record.objects.filter(config=conf.name).filter(response_code=200)
-        print(conf.name.name)
+
         week_ip = records.values(week=TruncWeek('time')).annotate(total=Count('ip', distinct=True)).order_by('week')
-        print(week_ip[0]['week'])
-        context["values"] = [w['total'] for w in week_ip]
-        context["labels"] = [w['week'].strftime('%d%m%y') for w in week_ip]
+        context["week_ips_count"] = [w['total'] for w in week_ip]
+        context["week_ips_labels"] = [w['week'].strftime('%d%m%y') for w in week_ip]
+
+        try:
+            most_popular_file_id = records.values('file').annotate(total=Count('file')).order_by('-total')[0]['file']
+            week_record = records.filter(file=most_popular_file_id).values(week=TruncWeek('time')).annotate(total=Count('file')).order_by('week')
+
+            context["week_records_count"] = [w['total'] for w in week_record]
+            context["week_records_labels"] = [w['week'].strftime('%d%m%y') for w in week_record]
+        except IndexError:
+            context["week_records_count"] = context["week_records_labels"] = []
         return context

@@ -2,6 +2,7 @@
 - return upd_database to geo wrapper
 - add colab region distinction, add autoupdate from https://www.gstatic.com/ipranges/cloud.json
 - refactor poller.py - split into smaller functions
+- refactor graphs according to https://testdriven.io/blog/django-charts/
 
 ### Create db
 

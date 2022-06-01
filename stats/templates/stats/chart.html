@@ -9,10 +9,10 @@ $(document).ready(function(){
             type: 'bar',
             grouped: true,
             data: {
-                labels: {{labels|safe}}, //loop through queryset,
+                labels: {{week_ips_labels|safe}}, //loop through queryset,
                 datasets: [{
                     label: 'unique IPs/week',
-                    data: {{values}},
+                    data: {{week_ips_count}},
                     backgroundColor: '#79aec8'
                 }]
             },
@@ -23,7 +23,27 @@ $(document).ready(function(){
                     }
                 }
             }
-});
+        });
+        var ctx = document.getElementById('newChart').getContext('2d');
+        var newChart = new Chart(ctx, {
+            type: 'bar',
+            grouped: true,
+            data: {
+                labels: {{week_records_labels|safe}}, //loop through queryset,
+                datasets: [{
+                    label: 'Downloads/week',
+                    data: {{week_records_count}},
+                    backgroundColor: '#79aec8'
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
     });
 </script>
 {%endblock scripts%}
@@ -32,4 +52,5 @@ $(document).ready(function(){
 <!-- displaying the chart -->
 <!-- you can also play around with the width and height to increase or decrease the chart size -->
 <canvas id="myChart" width="400" height="100"></canvas>
+<canvas id="newChart" width="400" height="100"></canvas>
 {%endblock content%}
