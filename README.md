@@ -1,6 +1,7 @@
 # TODO
 - return upd_database to geo wrapper
 - add colab region distinction, add autoupdate from https://www.gstatic.com/ipranges/cloud.json
+- refactor poller.py - split into smaller functions
 
 ### Create db
 

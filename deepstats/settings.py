@@ -25,7 +25,7 @@ SECRET_KEY = 'pidqjkob*l(nta4emr8^3^5m-9*#z=v0lpbgjlwkbuz$w+*qq('
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.10.78']
+ALLOWED_HOSTS = ['192.168.10.75', '0.0.0.0']
 
 
 # Application definition
@@ -57,7 +57,7 @@ ROOT_URLCONF = 'deepstats.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'stats' / 'templates' / 'stats'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
