@@ -42,4 +42,11 @@ class StatsChartView(TemplateView):
             context["week_records_labels"] = [w['week'].strftime('%d%m%y') for w in week_record]
         except IndexError:
             context["week_records_count"] = context["week_records_labels"] = []
+
+        country_stat = records.values('ip__country').annotate(total=Count('ip__country')).filter(total__gt=0).values('ip__country', 'total').order_by('-total')
+        country_count = [v['total'] for v in country_stat]
+        country_count = [c / sum(country_count) for c in country_count]
+        context['countries'] = [str(k['ip__country']) for k in country_stat]  # to prevent chart error in case if ip country is None
+        context['country_count'] = country_count
+
         return context
