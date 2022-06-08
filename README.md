@@ -28,6 +28,7 @@ cd ../hetzner
 rsync -a --ignore-existing root@178.63.27.41:/var/log/nginx/ .
 python manage.py shell -c 'from poller import boo; boo("share")'
 python manage.py shell -c 'from poller import boo; boo("hetzner")'
+python manage.py shell -c 'from poller import stand_access; stand_access()'
 ```
 
 ### Start server

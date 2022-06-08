@@ -41,7 +41,7 @@ class Hash(models.Model):
 
 
 class Record(models.Model):
-    ip = models.ForeignKey(IP,  on_delete=models.CASCADE)
+    ip = models.ForeignKey(IP, on_delete=models.CASCADE)
     time = models.DateTimeField('request time')
     file = models.ForeignKey(File, on_delete=models.CASCADE)
     config = models.ForeignKey(ConfigName, on_delete=models.CASCADE, null=True, blank=True)
@@ -60,3 +60,14 @@ class Record(models.Model):
 
     def __str__(self):
         return f'{self.ip} {self.time} {self.file}'
+
+
+class Service(models.Model):
+    name = models.TextField()
+
+
+class StandRecord(models.Model):
+    ip = models.ForeignKey(IP, on_delete=models.CASCADE)
+    time = models.DateTimeField('request time')
+    service = models.ForeignKey(Service, on_delete=models.CASCADE)
+    gz_hash = models.TextField()

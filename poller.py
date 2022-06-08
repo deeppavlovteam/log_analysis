@@ -14,7 +14,7 @@ from log_analyser.log_dataframe import LogDataFrame
 from log_analyser.log_tools import GeoliteDbWrapper, ColabWrapper
 from log_analyser.log_tools import get_file_md5_hash
 from log_analyser.log_transformers import validate_outer_request
-from stats.models import Record, Hash, File, Config, ConfigName, IP
+from stats.models import Record, Hash, File, Config, ConfigName, IP, StandRecord, Service
 
 file_buffer = {}
 config_buffer = {}
@@ -42,12 +42,70 @@ def get_location(ip_from: str):
     return country, city, company
 
 
-def add_gz_to_db(path_to_gz: Path):
-    hash = get_file_md5_hash(path_to_gz)
+def parse_gz(path_to_gz: Path):
     ldf = LogDataFrame({'log_dataframe_columns':['a'], 'log_dir': '', 'pickle_file': '', 'hashes_file': ''})
     lines = ldf._read_file(path_to_gz)
     template = r'^(\S+?)\s(\S+?)\s(\S+?)\s(\[.+?\])\s"GET\s(.+?)"\s(.+?)\s(.+?)\s(".*?")\s(".*?")\s(".+?")(.*?)$'
+    return re.findall(template, lines, flags=re.MULTILINE)
+
+
+def add_access(path_to_gz: Path):
+    ldf = LogDataFrame({'log_dataframe_columns':['a'], 'log_dir': '', 'pickle_file': '', 'hashes_file': ''})
+    lines = ldf._read_file(path_to_gz)
+    template = r'^(\S+?)\s(\S+?)\s(\S+?)\s(\[.+?\])\s"POST /model(.*?)"\s200\s(.+?)\s(".*?")\s(".*?")\s(".+?")(.*?)$'
     parsed = re.findall(template, lines, flags=re.MULTILINE)
+    hash = get_file_md5_hash(path_to_gz)
+    service_cache = {}
+    ip_buffer = {}
+    domains = {f'{i}.deeppavlov.ai' for i in range(7003, 7019)}
+    creating = []
+    for ip_from, domain, _1, timestamp, request, bytes, ref, app, _2, stat_data in tqdm(parsed):
+        if validate_outer_request({'ip_from': ip_from}) is False:
+            continue
+        domain = domain.replace('lnsigo.mipt.ru', 'deeppavlov.ai')
+        if domain not in domains:
+            continue
+        try:
+            service = service_cache[domain]
+        except KeyError:
+            try:
+                service = Service.objects.get(name=domain)
+            except Service.DoesNotExist:
+                service = Service(name=domain)
+                service.save()
+            service_cache[domain] = service
+        try:
+            ip = ip_buffer[ip_from]
+        except KeyError:
+            try:
+                ip = IP.objects.get(ip=ip_from)
+            except IP.DoesNotExist:
+                contry, city, company = get_location(ip_from)
+                ip = IP(ip=ip_from,
+                        # outer_request=validate_outer_request({'ip_from': ip_from}),
+                        country=contry,
+                        city=city,
+                        company=company)
+                ip.save()
+                ip_buffer[ip_from] = ip
+        try:
+            r = StandRecord(
+                ip=ip,
+                time=datetime.strptime(timestamp, '[%d/%b/%Y:%H:%M:%S %z]'),
+                service=service,
+                gz_hash=hash)
+        except ValueError as e:
+            print(ip_from, domain, _1, timestamp, request, bytes, ref, app, _2)
+            raise e
+        creating.append(r)
+    StandRecord.objects.bulk_create(creating)
+    h = Hash(filename=path_to_gz.name, hash=hash)
+    h.save()
+
+
+def add_gz_to_db(path_to_gz: Path):
+    hash = get_file_md5_hash(path_to_gz)
+    parsed = parse_gz(path_to_gz)
     creating = []
     for ip_from, domain, _1, timestamp, request, response_code, bytes, ref, app, _2, stat_data in parsed:
         if validate_outer_request({'ip_from': ip_from}) is False:
@@ -204,8 +262,6 @@ def upd_deeppavlov():
 
 
 def boo(source: str):
-    from time import time
-    start = time()
     if source == 'share':
         access = sorted([p for p in Path('/data/share/').resolve().glob('files-access.log*.gz')])
     elif source == 'hetzner':
@@ -220,5 +276,16 @@ def boo(source: str):
         Record.objects.filter(gz_hash=hash).delete()
         print(a.name)
         add_gz_to_db(a)
-    print(time()-start)
     #upd_deeppavlov()
+
+
+def stand_access():
+    access = sorted([p for p in Path('/data/share/').resolve().glob('access.log*.gz')])
+    for a in tqdm(access):
+        from time import time
+        hash = get_file_md5_hash(a)
+        if Hash.objects.filter(hash=hash).exists():
+            print('skipping file')
+            continue
+        StandRecord.objects.filter(gz_hash=hash).delete()
+        add_access(a)

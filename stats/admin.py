@@ -6,7 +6,7 @@ from django.db.models.expressions import Subquery
 from django.db.models.functions import Coalesce
 from rangefilter.filter import DateRangeFilter
 
-from .models import Record, Hash, File, Config, ConfigName
+from .models import Record, Hash, File, Config, ConfigName, Service, IP, StandRecord
 
 
 class ResponseCodeFilter(SimpleListFilter):
@@ -180,8 +180,38 @@ class FileAdmin(admin.ModelAdmin):
     n_records.admin_order_field = 'n_records'
 
 
+class ServiceAdmin(admin.ModelAdmin):
+    list_display = ('name', 'n_requests')
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_queryset(self, request):
+        qs = super(admin.ModelAdmin, self).get_queryset(request)
+        sub = StandRecord.objects.filter(service=OuterRef('pk'))
+
+        # unique_ip = sub.values('ip').annotate(z=Count('ip', distinct=True)).values('z')
+        #
+        class SQCount(Subquery):
+             template = "(SELECT count(*) FROM (%(subquery)s) _count)"
+             output_field = IntegerField()
+
+        qs = qs.annotate(n_requests=SQCount(sub))
+
+        return qs
+
+    def n_requests(self, inst):
+        return inst.n_requests
+    n_requests.admin_order_field = 'n_requests'
+
+class IPAdmin(admin.ModelAdmin):
+    list_display = ('ip', 'country', 'city', 'company')
+
+
 admin.site.register(Record, RecordAdmin)
 admin.site.register(Hash)
 admin.site.register(File, FileAdmin)
 admin.site.register(Config, ConfigAdmin)
 admin.site.register(ConfigName, ConfigNameAdmin)
+admin.site.register(Service, ServiceAdmin)
+admin.site.register(IP, IPAdmin)
