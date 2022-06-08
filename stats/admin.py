@@ -181,7 +181,7 @@ class FileAdmin(admin.ModelAdmin):
 
 
 class ServiceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'n_requests')
+    list_display = ('name', 'n_requests', 'unique_ip')
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -190,19 +190,24 @@ class ServiceAdmin(admin.ModelAdmin):
         qs = super(admin.ModelAdmin, self).get_queryset(request)
         sub = StandRecord.objects.filter(service=OuterRef('pk'))
 
-        # unique_ip = sub.values('ip').annotate(z=Count('ip', distinct=True)).values('z')
+        unique_ip = sub.values('ip').annotate(z=Count('ip', distinct=True)).values('z')
         #
         class SQCount(Subquery):
              template = "(SELECT count(*) FROM (%(subquery)s) _count)"
              output_field = IntegerField()
 
-        qs = qs.annotate(n_requests=SQCount(sub))
+        qs = qs.annotate(n_requests=SQCount(sub)).annotate(unique_ip=SQCount(unique_ip))
 
         return qs
 
     def n_requests(self, inst):
         return inst.n_requests
     n_requests.admin_order_field = 'n_requests'
+
+    def unique_ip(self, inst):
+        return inst.unique_ip
+    unique_ip.admin_order_field = 'unique_ip'
+
 
 class IPAdmin(admin.ModelAdmin):
     list_display = ('ip', 'country', 'city', 'company')
