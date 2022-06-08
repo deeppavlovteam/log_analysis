@@ -182,6 +182,7 @@ class FileAdmin(admin.ModelAdmin):
 
 class ServiceAdmin(admin.ModelAdmin):
     list_display = ('name', 'n_requests', 'unique_ip')
+    list_filter = (('name', MyDateFilter),)
 
     def has_delete_permission(self, request, obj=None):
         return False
@@ -189,6 +190,27 @@ class ServiceAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super(admin.ModelAdmin, self).get_queryset(request)
         sub = StandRecord.objects.filter(service=OuterRef('pk'))
+
+        for filter in self.list_filter:
+            if isinstance(filter, str):
+                continue
+            elif isinstance(filter, tuple):
+                gte = request.GET.get('time__range__gte')
+                lte = request.GET.get('time__range__lte')
+                dic = {}
+                if gte is not None and gte != '':
+                    dic.update({'time__gte': gte})
+                if lte is not None and lte != '':
+                    dic.update({'time__lte': lte})
+                if dic:
+                    sub = sub.filter(**dic)
+            else:
+                val = request.GET.get(filter.parameter_name)
+                if filter.parameter_name == 'md5' and val is not None:
+                    sub = sub.filter(file__md5=val)
+                else:
+                    if val is not None:
+                        sub = sub.filter(**{f'{filter.parameter_name}': val})
 
         unique_ip = sub.values('ip').annotate(z=Count('ip', distinct=True)).values('z')
         #
