@@ -3,7 +3,7 @@ from django.db.models.functions import TruncWeek
 from django.views import generic
 from django.views.generic import TemplateView
 
-from .models import Record, Config
+from .models import Record, Config, Service, StandRecord
 
 
 class IndexView(generic.ListView):
@@ -42,6 +42,33 @@ class StatsChartView(TemplateView):
             context["week_records_labels"] = [w['week'].strftime('%d%m%y') for w in week_record]
         except IndexError:
             context["week_records_count"] = context["week_records_labels"] = []
+
+        country_stat = records.values('ip__country').annotate(total=Count('ip__country')).filter(total__gt=0).values('ip__country', 'total').order_by('-total')
+        country_count = [v['total'] for v in country_stat]
+        country_count = [c / sum(country_count) for c in country_count]
+        context['countries'] = [str(k['ip__country']) for k in country_stat]  # to prevent chart error in case if ip country is None
+        context['country_count'] = country_count
+
+        return context
+
+
+class ServiceChartView(TemplateView):
+    template_name = 'stats/service.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        service_id = kwargs.pop('service_id')
+        service = Service.objects.get(id=service_id)
+        records = StandRecord.objects.filter(service=service)
+
+        week_ip = records.values(week=TruncWeek('time')).annotate(total=Count('ip', distinct=True)).order_by('week')
+        context["week_ips_count"] = [w['total'] for w in week_ip]
+        context["week_ips_labels"] = [w['week'].strftime('%d%m%y') for w in week_ip]
+
+        week_record = records.values(week=TruncWeek('time')).annotate(total=Count('id')).order_by('week')
+
+        context["week_records_count"] = [w['total'] for w in week_record]
+        context["week_records_labels"] = [w['week'].strftime('%d%m%y') for w in week_record]
 
         country_stat = records.values('ip__country').annotate(total=Count('ip__country')).filter(total__gt=0).values('ip__country', 'total').order_by('-total')
         country_count = [v['total'] for v in country_stat]
