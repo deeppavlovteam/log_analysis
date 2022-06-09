@@ -8,8 +8,8 @@ services:
       - POSTGRES_DB=django_db
     volumes:
       - $DB_DIR:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
+#    ports:
+#      - 5432:5432
   analytics:
     build:
       context: .
