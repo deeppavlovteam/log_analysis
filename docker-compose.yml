@@ -6,14 +6,15 @@ services:
       - POSTGRES_PASSWORD=stat
       - POSTGRES_USER=stat
       - POSTGRES_DB=django_db
+    volumes:
+      - $DB_DIR:/var/lib/postgresql/data
     ports:
       - 5432:5432
   analytics:
     build:
       context: .
     volumes:
-      - /home/ignatov/Desktop/log_data:/data
-      - /home/ignatov/dev/log_analysis:/app
-    command: tail -f /dev/null
+      - $DATA_DIR:/data
+    command: python manage.py runserver 0.0.0.0:7050
     ports:
       - 7050:7050

@@ -23,9 +23,9 @@ python manage.py shell -c 'from poller import upd_deeppavlov; upd_deeppavlov()'
 
 ```commandline
 cd share
-rsync -a --ignore-existing ignatov@share.ipavlov.mipt.ru:/var/log/nginx/ .
+rsync -a --ignore-existing ignatov@share.ipavlov.mipt.ru:/var/log/nginx/*.gz .
 cd ../hetzner
-rsync -a --ignore-existing root@178.63.27.41:/var/log/nginx/ .
+rsync -a --ignore-existing root@178.63.27.41:/var/log/nginx/*.gz .
 python manage.py shell -c 'from poller import boo; boo("share")'
 python manage.py shell -c 'from poller import boo; boo("hetzner")'
 python manage.py shell -c 'from poller import stand_access; stand_access()'
@@ -36,6 +36,16 @@ python manage.py shell -c 'from poller import stand_access; stand_access()'
 python manage.py runserver 0.0.0.0:7050
 ```
 
+
+
+### Run docker containers
+
+To prepare, change command to `tail -f /dev/null` and prepare db. Don't forget to change DATABASES in settings.py
+(NAME, USER, PASSWORD)
+
+```commandline
+DB_DIR=/data/analytics_db DATA_DIR=/data/log_data docker-compose up
+```
 
 updating example:
 select * from stats_config, stats_configname where stats_config.name_id = stats_configname.id and name in ('kbqa_cq', 'kbqa_cq_bert_ranker', 'kbqa_cq_mt_bert', 'kbqa_cq_online', 'kbqa_cq_online_mt_bert', 'kbqa_cq_rus', 'kbqa_cq_sep', 'kbqa_mt_bert_train');
