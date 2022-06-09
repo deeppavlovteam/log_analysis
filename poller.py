@@ -107,7 +107,7 @@ def add_gz_to_db(path_to_gz: Path):
     hash = get_file_md5_hash(path_to_gz)
     parsed = parse_gz(path_to_gz)
     creating = []
-    for ip_from, domain, _1, timestamp, request, response_code, bytes, ref, app, _2, stat_data in parsed:
+    for ip_from, domain, _1, timestamp, request, response_code, bytes, ref, app, _2, stat_data in tqdm(parsed):
         if validate_outer_request({'ip_from': ip_from}) is False:
             continue
         # from 2 april 2021 logs contain token, from april-may 2021 (see releases) logs also contain download
