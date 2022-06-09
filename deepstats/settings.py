@@ -79,7 +79,9 @@ WSGI_APPLICATION = 'deepstats.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': 'django_db',
+        'USER': 'stat',
+        'PASSWORD': 'stat',
         'HOST': 'db',
         'PORT': '5432'
     }
