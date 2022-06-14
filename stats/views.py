@@ -29,6 +29,7 @@ class StatsChartView(TemplateView):
         config_id = kwargs.pop('config_id')
         conf = Config.objects.get(id=config_id)
         records = Record.objects.filter(config=conf.name).filter(response_code=200)
+        context['page_name'] = conf.name.name
 
         week_ip = records.values(week=TruncWeek('time')).annotate(total=Count('ip', distinct=True)).order_by('week')
         context["week_ips_count"] = [w['total'] for w in week_ip]
@@ -60,6 +61,7 @@ class ServiceChartView(TemplateView):
         service_id = kwargs.pop('service_id')
         service = Service.objects.get(id=service_id)
         records = StandRecord.objects.filter(service=service)
+        context['page_name'] = service.name
 
         week_ip = records.values(week=TruncWeek('time')).annotate(total=Count('ip', distinct=True)).order_by('week')
         context["week_ips_count"] = [w['total'] for w in week_ip]
