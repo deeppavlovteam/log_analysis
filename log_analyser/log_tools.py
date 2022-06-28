@@ -1,12 +1,13 @@
-import hashlib
 import gzip
-from pathlib import Path
+import hashlib
+import json
 from datetime import date
+from ipaddress import IPv4Address, IPv4Network
+from pathlib import Path
 
 import requests
 from maxminddb import open_database
 from maxminddb.reader import Reader
-
 
 GEOLITE_DB_ARC_URL = 'http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz'
 GEOLITE_HASH_URL = 'http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.md5'
@@ -27,14 +28,17 @@ def get_file_md5_hash(file_path: Path) -> str:
 
 
 class GeoliteDbWrapper:
-    def __init__(self) -> None:
-        self._dp_arc_url = GEOLITE_DB_ARC_URL
-        self._hash_url = GEOLITE_HASH_URL
-        self._db_path = Path(GEOLITE_DB_PATH).resolve()
-        self._hash_path = Path(GEOLITE_HASH_PATH).resolve()
+    def __init__(self, dp_arc_url: str = GEOLITE_DB_ARC_URL,
+                 hash_url: str = GEOLITE_HASH_URL,
+                 db_path: str = GEOLITE_DB_PATH,
+                 hash_path: str = GEOLITE_HASH_PATH) -> None:
+        self._dp_arc_url = dp_arc_url
+        self._hash_url = hash_url
+        self._db_path = Path(db_path).resolve()
+        self._hash_path = Path(hash_path).resolve()
 
         self._db_upd_check_date = date.fromtimestamp(0)
-        self._db_reader: Reader = self._db_reader if self._update_db() else open_database(self._db_path)
+        self._db_reader: Reader = open_database(self._db_path)
 
     def _update_db(self) -> bool:
         updated = False
@@ -66,6 +70,25 @@ class GeoliteDbWrapper:
         return updated
 
     def get_ip_info(self, ip_address: str):
-        self._update_db()
         result = self._db_reader.get(ip_address)
         return result
+
+
+class ColabWrapper:
+    def __init__(self, cloud_path):
+        with open(cloud_path) as fin:
+            cloud = json.loads(fin.read())
+        self.networks = []
+        for net_item in cloud['prefixes']:
+            if 'ipv4Prefix' not in net_item:
+                continue
+            net = IPv4Network(net_item['ipv4Prefix'])
+            self.networks.append(net)
+
+    def __call__(self, ip):
+        '''Returns true if ip is in any cloud networks, false otherwise.'''
+        ip = IPv4Address(ip)
+        for net in self.networks:
+            if ip in net:
+                return True
+        return False

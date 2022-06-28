@@ -1,0 +1,9 @@
+{% if latest_records %}
+    <ul>
+    {% for record in latest_records %}
+        <li><a href="{% url 'detail' record.id %}">{{ record.file }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No stats are available.</p>
+{% endif %}

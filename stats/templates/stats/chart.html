@@ -1,0 +1,83 @@
+{% extends 'base.html'%}
+
+{%block scripts%}
+<script>
+// jquery function
+$(document).ready(function(){
+        var ctx = document.getElementById('myChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            grouped: true,
+            data: {
+                labels: {{week_ips_labels|safe}}, //loop through queryset,
+                datasets: [{
+                    label: 'unique IPs/week',
+                    data: {{week_ips_count}},
+                    backgroundColor: '#79aec8'
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        var ctx = document.getElementById('newChart').getContext('2d');
+        var newChart = new Chart(ctx, {
+            type: 'bar',
+            grouped: true,
+            data: {
+                labels: {{week_records_labels|safe}}, //loop through queryset,
+                datasets: [{
+                    label: 'Downloads/week',
+                    data: {{week_records_count}},
+                    backgroundColor: '#79aec8'
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        var ctx = document.getElementById('countryChart').getContext('2d');
+        var countryChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: {{countries|safe}}, //loop through queryset,
+                datasets: [{
+                    label: 'Downloads/week',
+                    data: {{country_count}},
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ]
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+</script>
+{%endblock scripts%}
+
+{%block content%}
+<!-- displaying the chart -->
+<!-- you can also play around with the width and height to increase or decrease the chart size -->
+<canvas id="myChart" width="400" height="100"></canvas>
+<canvas id="newChart" width="400" height="100"></canvas>
+<canvas id="countryChart" width="400" height="100"></canvas>
+{%endblock content%}
